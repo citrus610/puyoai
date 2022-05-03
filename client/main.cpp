@@ -87,6 +87,8 @@ int main()
     using namespace LTPuyo;
     using namespace std;
 
+    // bench_search(1000);
+
     create_window(16, 18, 50);
 
     srand(uint32_t(time(NULL)));
