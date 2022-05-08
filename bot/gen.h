@@ -18,39 +18,39 @@ static void generate(Field& field, Placement result[22], int& count)
     int height[6];
     field.get_height(height);
 
-    for (uint8_t x = 0; x < 6; ++x) {
-        if (height[x] > 11 || (height[2] > 9 && x == 2)) {
-            continue;
-        }
-
-        result[count] = Placement { x, Rotation::UP };
-        ++count;
-    }
-
-    for (uint8_t x = 0; x < 6; ++x) {
-        if (height[x] > 11 || (height[2] > 9 && x == 2)) {
-            continue;
-        }
-
-        result[count] = Placement { x, Rotation::DOWN };
-        ++count;
-    }
-
-    for (uint8_t x = 0; x < 5; ++x) {
+    for (int8_t x = 4; x >= 0; --x) {
         if (height[x] > 12 || height[x + 1] > 12 || (height[2] > 10 && (x == 1 || x == 2))) {
             continue;
         }
 
-        result[count] = Placement { x, Rotation::RIGHT };
+        result[count] = Placement { uint8_t(x), Rotation::RIGHT };
         ++count;
     }
 
-    for (uint8_t x = 1; x < 6; ++x) {
+    for (int8_t x = 5; x > 0; --x) {
         if (height[x] > 12 || height[x - 1] > 12 || (height[2] > 10 && (x == 2 || x == 3))) {
             continue;
         }
 
-        result[count] = Placement { x, Rotation::LEFT };
+        result[count] = Placement { uint8_t(x), Rotation::LEFT };
+        ++count;
+    }
+
+    for (int8_t x = 5; x >= 0; --x) {
+        if (height[x] > 11 || (height[2] > 9 && x == 2)) {
+            continue;
+        }
+
+        result[count] = Placement { uint8_t(x), Rotation::UP };
+        ++count;
+    }
+
+    for (int8_t x = 5; x >= 0; --x) {
+        if (height[x] > 11 || (height[2] > 9 && x == 2)) {
+            continue;
+        }
+
+        result[count] = Placement { uint8_t(x), Rotation::DOWN };
         ++count;
     }
 };

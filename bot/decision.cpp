@@ -32,6 +32,9 @@ void Decision::decide(Field field, SearchInfo& search_info, SearchCandidate& res
             have_chain.end(),
             [&] (const SearchCandidate& a, const SearchCandidate& b) {
                 // return b.score.attack < a.score.attack;
+                if (b.score.chain == a.score.chain) {
+                    return b.score.attack < a.score.attack;
+                }
                 return b.score.chain < a.score.chain;
             }
         );
@@ -43,6 +46,9 @@ void Decision::decide(Field field, SearchInfo& search_info, SearchCandidate& res
             have_nchain.begin(),
             have_nchain.end(),
             [&] (const SearchCandidate& a, const SearchCandidate& b) {
+                if (b.nscore.chain == a.nscore.chain) {
+                    return b.node.score < a.node.score;
+                }
                 return b.nscore.chain < a.nscore.chain;
             }
         );

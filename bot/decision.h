@@ -25,14 +25,15 @@ static void bench_search(int iter)
 
     Field field;
 
+    double chain_total = 0;
+    double chain_count = 0;
+
     for (int i = 0; i < iter; ++i)
     {
         vector<pair<Puyo, Puyo>> tqueue;
         tqueue.push_back(queue[(i + 0) % iter]);
         tqueue.push_back(queue[(i + 1) % iter]);
         tqueue.push_back(queue[(i + 2) % iter]);
-
-        ++i;
 
         SearchInfo sinfo;
 
@@ -52,9 +53,18 @@ static void bench_search(int iter)
 
         Chain chain;
         field.pop(chain);
+
+        if (chain.count > 0) {
+            chain_total += chain.count;
+            chain_count += 1;
+        }
     }
 
-    cout << "nps: " << (node_count / time) << "knode/s" << endl;
+    cout << "nps:   " << (node_count / time) << " knode/s" << endl;
+    cout << "atime: " << (time / iter) << " ms" << endl;
+    if (chain_count > 0) {
+        cout << "chain: " << (chain_total / chain_count) << endl;
+    }
 };
 
 };
