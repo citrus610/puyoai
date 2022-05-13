@@ -30,7 +30,7 @@ struct SearchInfo
 class Search
 {
 public:
-    static void search(Field field, std::vector<std::pair<Puyo, Puyo>> queue, SearchInfo& result);
+    static void search(Field field, std::vector<std::pair<Puyo, Puyo>> queue, SearchInfo& result, Heuristic heuristic = DEFAULT_HEURISTIC());
     static SearchScore nsearch(Node& node, std::vector<std::pair<Puyo, Puyo>>& queue, Evaluator& evaluator, TTable& ttable, int depth, int& node_count);
     static SearchScore qsearch(Node& node, Evaluator& evaluator, TTable& ttable, int depth, int limit, int& node_count);
 };

@@ -3,7 +3,7 @@
 namespace LTPuyo
 {
 
-void Search::search(Field field, std::vector<std::pair<Puyo, Puyo>> queue, SearchInfo& result)
+void Search::search(Field field, std::vector<std::pair<Puyo, Puyo>> queue, SearchInfo& result, Heuristic heuristic)
 {
     if (queue.size() < 2) {
         return;
@@ -16,7 +16,7 @@ void Search::search(Field field, std::vector<std::pair<Puyo, Puyo>> queue, Searc
     node.field = field;
 
     Evaluator evaluator;
-    evaluator.heuristic = DEFAULT_HEURISTIC();
+    evaluator.heuristic = heuristic;
 
     TTable ttable = TTable();
     ttable.init();
@@ -71,26 +71,27 @@ SearchScore Search::nsearch(Node& node, std::vector<std::pair<Puyo, Puyo>>& queu
     SearchScore score = SearchScore();
 
     Puyo pair[2] = { queue[depth].first, queue[depth].second };
-    Placement placement[22];
-    int placement_count = 0;
-    generate(node.field, placement, placement_count);
-    node_count += placement_count;
+    avec<Placement, 22> placement;
+    avec<Node, 22> children = avec<Node, 22>();
+    Generator::generate(node.field, queue[depth], placement);
+    node_count += placement.get_size();
 
-    Node children[22];
-    int children_count = 0;
 
-    for (int i = 0; i < placement_count; ++i) {
+    for (int i = 0; i < placement.get_size(); ++i) {
         Node child = node;
         Chain chain = Chain();
         child.field.drop_pair(placement[i].x, pair, placement[i].rotation);
         child.field.pop(chain);
 
+        if (child.field.get_puyo(2, 11) != Puyo::NONE) {
+            continue;
+        }
+
         if (chain.count == 0) {
             evaluator.evaluate(child, node, placement[i], pair);
             if (ttable.add_entry(ttable.hash(child.field), depth)) {
                 if (depth + 1 < queue.size()) {
-                    children[children_count] = child;
-                    ++children_count;
+                    children.add(child);
                 }
                 else {
                     if (6 * 13 - node.field.popcount() > 16) {
@@ -109,18 +110,18 @@ SearchScore Search::nsearch(Node& node, std::vector<std::pair<Puyo, Puyo>>& queu
         }
     }
 
-    if (children_count > 0) {
+    if (children.get_size() > 0) {
         std::sort
         (
-            children,
-            children + children_count,
+            children.iter_begin(),
+            children.iter_end(),
             [&] (const Node& a, const Node& b) {
                 return b < a;
             }
         );
     }
 
-    for (int i = 0; i < children_count; ++i) {
+    for (int i = 0; i < children.get_size(); ++i) {
         SearchScore nscore = nsearch(children[i], queue, evaluator, ttable, depth + 1, node_count);
         score.attack = std::max(score.attack, nscore.attack);
         score.chain = std::max(score.chain, nscore.chain);
@@ -134,29 +135,30 @@ SearchScore Search::qsearch(Node& node, Evaluator& evaluator, TTable& ttable, in
 {
     SearchScore score = SearchScore();
 
-    int height[6];
-    node.field.get_height(height);
+    for (uint8_t p = 0; p < Puyo::COUNT - 1; ++p) {
+        avec<Placement, 22> placement;
+        Generator::generate(node.field, { Puyo(p), Puyo(p) }, placement);
+        node_count += placement.get_size();
 
-    for (uint8_t x = 0; x < 6; ++x) {
-        if (height[x] >= 12) {
-            continue;
-        }
+        for (int i = 0; i < placement.get_size(); ++i) {
+            if (placement[i].rotation != Rotation::RIGHT) {
+                continue;
+            }
 
-        for (uint8_t p = 0; p < Puyo::COUNT - 1; ++p) {
-            Puyo pair[2] = { Puyo(p), Puyo(p) };
-
-            Node child = node;
+            Field field = node.field;
             Chain chain = Chain();
-            child.field.drop_pair(x, pair, Rotation::UP);
-            child.field.pop(chain);
+            field.drop_pair(placement[i].x, { Puyo(p), Puyo(p) }, placement[i].rotation);
+            field.pop(chain);
+
+            if (field.get_puyo(2, 11) != Puyo::NONE) {
+                continue;
+            }
 
             if (chain.count > 0) {
                 score.attack = std::max(score.attack, Field::calculate_point(chain));
                 score.chain = std::max(score.chain, chain.count);
             }
         }
-
-        node_count += Puyo::COUNT - 1;
     }
 
     return score;
