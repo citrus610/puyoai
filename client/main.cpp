@@ -1,6 +1,7 @@
 #include <iostream>
 #include "../bot/decision.h"
 #include "render.h"
+#include "data.h"
 
 Color pchar_to_color(char c)
 {
@@ -20,6 +21,39 @@ Color pchar_to_color(char c)
         return COLOR_FG_BLACK;
     }
     return COLOR_FG_BLACK;
+};
+
+std::vector<LTPuyo::Pair> create_queue()
+{
+    using namespace LTPuyo;
+    using namespace std;
+
+    vector<Puyo> bag;
+    bag.reserve(256);
+
+    for (int i = 0; i < 64; ++i) {
+        for (uint8_t p = 0; p < Puyo::COUNT - 1; ++p) {
+            bag.push_back(Puyo(p));
+        }
+    }
+
+    for (int t = 0; t < 4; ++t) {
+        for (int i = 0; i < 256; ++i) {
+            int k = rand() % 256;
+            Puyo value = bag[i];
+            bag[i] = bag[k];
+            bag[k] = value;
+        }
+    }
+
+    vector<Pair> queue;
+    queue.reserve(128);
+
+    for (int i = 0; i < 128; ++i) {
+        queue.push_back({ bag[i * 2], bag[i * 2 + 1] });
+    }
+
+    return queue;
 };
 
 void render_field(LTPuyo::Field field)
@@ -82,25 +116,49 @@ void render_queue(std::pair<LTPuyo::Puyo, LTPuyo::Puyo> p1, std::pair<LTPuyo::Pu
     draw(9, 5, PIXEL_CIRCLE, color);
 };
 
+void load_json_heuristic(LTPuyo::Heuristic& h)
+{
+    std::ifstream file;
+    file.open("config.json");
+    json js;
+    file >> js;
+    file.close();
+    LTPuyo::from_json(js, h);
+};
+
+void save_json_heuristic()
+{
+    std::ifstream f("config.json");
+    if (f.good()) {
+        return;
+    };
+    f.close();
+
+    std::ofstream o("config.json");
+    json js;
+    LTPuyo::to_json(js, LTPuyo::DEFAULT_HEURISTIC());
+    o << std::setw(4) << js << std::endl;
+    o.close();
+};
+
 int main()
 {
     using namespace LTPuyo;
     using namespace std;
 
-    // bench_search(1000);
-
     create_window(16, 18, 50);
 
     srand(uint32_t(time(NULL)));
+
+    Heuristic heuristic;
+    save_json_heuristic();
+    load_json_heuristic(heuristic);
 
     cin.get();
 
     int time_wait = 500;
 
-    vector<pair<Puyo, Puyo>> queue;
-    for (int i = 0; i < 1000; ++i) {
-        queue.push_back({ Puyo(rand() % 4), Puyo(rand() % 4) });
-    }
+    vector<Pair> queue = create_queue();
 
     Field field;
     render_field(field);
@@ -109,18 +167,22 @@ int main()
     int i = 0;
     while (true) 
     {
-        vector<pair<Puyo, Puyo>> tqueue;
-        tqueue.push_back(queue[(i + 0) % 1000]);
-        tqueue.push_back(queue[(i + 1) % 1000]);
-        tqueue.push_back(queue[(i + 2) % 1000]);
+        vector<Pair> tqueue;
+        tqueue.push_back(queue[(i + 0) % 128]);
+        tqueue.push_back(queue[(i + 1) % 128]);
+        tqueue.push_back(queue[(i + 2) % 128]);
 
         ++i;
 
         SearchInfo sinfo;
 
-        Search::search(field, tqueue, sinfo);
+        Search::search(field, tqueue, sinfo, heuristic);
 
         draw_text(1, 16, std::wstring(L"node: ") + std::to_wstring(sinfo.node), COLOR_FG_WHITE);
+
+        if (sinfo.node == 0) {
+            return -1;
+        }
 
         SearchCandidate scan;
 
