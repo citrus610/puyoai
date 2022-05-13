@@ -10,8 +10,11 @@ void Evaluator::evaluate(Node& node, Node& parent, Placement placement, Puyo puy
     int height[6];
     node.field.get_height(height);
 
+    // node.score.evaluation += *std::max_element(height, height + 6) * this->heuristic.evaluation.height;
+
     node.score.evaluation += Evaluator::bumpiness(height) * this->heuristic.evaluation.bumpiness;
     node.score.evaluation += Evaluator::bumpiness_sq(height) * this->heuristic.evaluation.bumpiness_sq;
+
     int sidewell[2];
     Evaluator::sidewell(height, sidewell);
     node.score.evaluation += sidewell[0] * this->heuristic.evaluation.sidewell;
@@ -22,16 +25,15 @@ void Evaluator::evaluate(Node& node, Node& parent, Placement placement, Puyo puy
     node.score.accumulate += connection[0] * this->heuristic.accumulate.connection;
     node.score.accumulate += connection[1] * this->heuristic.accumulate.connection;
     node.score.accumulate += (3 - connection[0]) * this->heuristic.accumulate.disconnection;
-    // for (int i = 0; i < Shape::SHAPE_COUNT; ++i) {
-    //     node.score.accumulate += Evaluator::detect_shape(node.field, placement, puyo, height, Shape(i)) * this->heuristic.accumulate.shape[i];
-    // }
 };
 
 int Evaluator::bumpiness(int height[6])
 {
     int result = 0;
     result += std::abs(height[0] - height[1]);
+    result += std::abs(height[1] - height[2]);
     result += std::abs(height[2] - height[3]);
+    result += std::abs(height[3] - height[4]);
     result += std::abs(height[4] - height[5]);
     return result;
 };

@@ -90,6 +90,19 @@ int Field::get_height(int x)
     return 16 - std::countl_zero(column_or);
 };
 
+bool Field::is_occupied(int height[6], int x, int y)
+{
+    if (x < 0 || x > 5 || y < 0) {
+        return true;
+    }
+    return y < height[x];
+};
+
+bool Field::is_colliding(int height[6], int x, int y, Rotation r)
+{
+    return this->is_occupied(height, x, y) || this->is_occupied(height, x + ROTATION_OFFSET[r][0], y + ROTATION_OFFSET[r][1]);
+};
+
 int Field::popcount()
 {
     int height[6];
@@ -126,6 +139,30 @@ void Field::drop_pair(int x, Puyo puyo[2], Rotation rotation)
     case Rotation::LEFT:
         this->drop_puyo(x, puyo[0]);
         this->drop_puyo(x - 1, puyo[1]);
+        break;
+    }
+};
+
+void Field::drop_pair(int x, Pair pair, Rotation rotation)
+{
+    assert(x >= 0 && x < 6);
+    switch (rotation)
+    {
+    case Rotation::UP:
+        this->drop_puyo(x, pair.first);
+        this->drop_puyo(x, pair.second);
+        break;
+    case Rotation::RIGHT:
+        this->drop_puyo(x, pair.first);
+        this->drop_puyo(x + 1, pair.second);
+        break;
+    case Rotation::DOWN:
+        this->drop_puyo(x, pair.second);
+        this->drop_puyo(x, pair.first);
+        break;
+    case Rotation::LEFT:
+        this->drop_puyo(x, pair.first);
+        this->drop_puyo(x - 1, pair.second);
         break;
     }
 };

@@ -20,6 +20,8 @@
 #include <atomic>
 #include <x86intrin.h>
 #include <condition_variable>
+#include <stdalign.h>
+#include "avec.h"
 
 namespace LTPuyo
 {
@@ -31,6 +33,13 @@ constexpr int CHAIN_POWER_SIZE = 20;
 constexpr int CHAIN_COLOR_BONUS[CHAIN_COLOR_BONUS_SIZE] = { 0, 0, 3, 6, 12, 24 };
 constexpr int CHAIN_GROUP_BONUS[CHAIN_GROUP_BONUS_SIZE] = { 0, 0, 0, 0, 0, 2, 3, 4, 5, 6, 7, 10 };
 constexpr int CHAIN_POWER[CHAIN_POWER_SIZE] = { 0, 0, 8, 16, 32, 64, 96, 128, 160, 192, 224, 256, 288, 320, 352, 384, 416, 448, 480, 512 };
+
+constexpr int8_t ROTATION_OFFSET[4][2] = {
+    { 0, 1 },
+    { 1, 0 },
+    { 0, -1 },
+    { -1, 0 }
+};
 
 enum Puyo : uint8_t
 {
@@ -50,6 +59,8 @@ enum Rotation : uint8_t
     DOWN,
     LEFT
 };
+
+using Pair = std::pair<Puyo, Puyo>;
 
 struct Chain
 {
@@ -83,10 +94,14 @@ public:
     void get_height(int height[6]);
     int get_height(int x);
 public:
+    bool is_occupied(int height[6], int x, int y);
+    bool is_colliding(int height[6], int x, int y, Rotation r);
+public:
     int popcount();
 public:
     void drop_puyo(int x, Puyo puyo);
     void drop_pair(int x, Puyo puyo[2], Rotation rotation);
+    void drop_pair(int x, Pair pair, Rotation rotation);
 public:
     void poppable_mask(FieldMono& mask, bool color[Puyo::COUNT - 1]);
     void pop(Chain& chain);

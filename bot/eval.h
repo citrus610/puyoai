@@ -44,14 +44,14 @@ constexpr Heuristic DEFAULT_HEURISTIC()
 {
     Heuristic result;
 
-    result.accumulate.connection = 50;
-    result.accumulate.connection_horizontal = 50;
-    result.accumulate.disconnection = -25;
+    result.accumulate.connection = 176;
+    result.accumulate.connection_horizontal = 114;
+    result.accumulate.disconnection = -11;
     
-    result.evaluation.bumpiness = -26;
-    result.evaluation.bumpiness_sq = -15;
-    result.evaluation.sidewell = -10;
-    result.evaluation.sidewell_sq = 0;
+    result.evaluation.bumpiness = -68;
+    result.evaluation.bumpiness_sq = -68;
+    result.evaluation.sidewell = -54;
+    result.evaluation.sidewell_sq = -33;
 
     return result;
 };
