@@ -21,16 +21,16 @@ void Search::search(Field field, std::vector<std::pair<Puyo, Puyo>> queue, Searc
     TTable ttable = TTable();
     ttable.init();
 
-    Placement placement[22];
-    int placement_count = 0;
-    generate(node.field, placement, placement_count);
     Puyo pair[2] = { queue[0].first, queue[0].second };
-    result.node += placement_count;
+    avec<Placement, 22> placement;
+    avec<Node, 22> children = avec<Node, 22>();
+    Generator::generate(node.field, queue[0], placement);
+    result.node += placement.get_size();
 
     std::vector<SearchCandidate> ncandidate;
     ncandidate.reserve(22);
 
-    for (int i = 0; i < placement_count; ++i) {
+    for (int i = 0; i < placement.get_size(); ++i) {
         SearchCandidate candidate = { node, placement[i], SearchScore() };
 
         Chain chain = Chain();
@@ -94,7 +94,7 @@ SearchScore Search::nsearch(Node& node, std::vector<std::pair<Puyo, Puyo>>& queu
                     children.add(child);
                 }
                 else {
-                    if (6 * 13 - node.field.popcount() > 16) {
+                    if (6 * 13 - node.field.popcount() > TRIGGER_POINT) {
                         SearchScore qscore = Search::qsearch(child, evaluator, ttable, 0, 2, node_count);
                         score.attack = std::max(score.attack, qscore.attack);
                         score.chain = std::max(score.chain, qscore.chain);

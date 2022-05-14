@@ -176,9 +176,20 @@ int main()
 
         SearchInfo sinfo;
 
+        auto time_1 = chrono::high_resolution_clock::now();
         Search::search(field, tqueue, sinfo, heuristic);
+        auto time_2 = chrono::high_resolution_clock::now();
 
-        draw_text(1, 16, std::wstring(L"node: ") + std::to_wstring(sinfo.node), COLOR_FG_WHITE);
+        int64_t time = chrono::duration_cast<chrono::microseconds>(time_2 - time_1).count();
+
+        draw_text(0, 14, std::wstring(L"node: ") + std::to_wstring(sinfo.node), COLOR_FG_WHITE);
+        draw_text(0, 15, std::wstring(L"time: ") + std::to_wstring(int(std::round(double(time) / 1000.0))) + std::wstring(L" ms"), COLOR_FG_WHITE);
+        if (time == 0) {
+            draw_text(0, 16, std::wstring(L"nps:  ") + std::wstring(L"NULL") + std::wstring(L" kn/s"), COLOR_FG_WHITE);
+        }
+        else {
+            draw_text(0, 16, std::wstring(L"nps:  ") + std::to_wstring(int(std::round(double(sinfo.node) / double(time) * 1000.0))) + std::wstring(L" kn/s"), COLOR_FG_WHITE);
+        }
 
         if (sinfo.node == 0) {
             return -1;
@@ -187,7 +198,6 @@ int main()
         SearchCandidate scan;
 
         Decision::decide(field, sinfo, scan);
-
 
         Puyo pair[2] = { tqueue[0].first, tqueue[0].second };
 

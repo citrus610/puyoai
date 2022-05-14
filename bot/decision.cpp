@@ -72,14 +72,16 @@ void Decision::decide(Field field, SearchInfo& search_info, SearchCandidate& res
         remain_empty += 13 - height[i];
     }
 
-    if (remain_empty <= 16) {
+    if (remain_empty <= TRIGGER_POINT) {
         if (!have_nchain.empty()) {
             std::sort
             (
                 have_nchain.begin(),
                 have_nchain.end(),
                 [&] (const SearchCandidate& a, const SearchCandidate& b) {
-                    // return b.nscore.attack < a.nscore.attack;
+                    if (b.nscore.chain == a.nscore.chain) {
+                        return b.nscore.attack < a.nscore.attack;
+                    }
                     return b.nscore.chain < a.nscore.chain;
                 }
             );

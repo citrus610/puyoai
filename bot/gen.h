@@ -65,50 +65,6 @@ public:
     static void lock(Field& field, int height[6], Position& position, avec<Placement, 22>& locks, PlacementMap& locks_map, bool equal_pair);
 };
 
-static void generate(Field& field, Placement result[22], int& count)
-{
-    count = 0;
-
-    int height[6];
-    field.get_height(height);
-
-    for (int8_t x = 4; x >= 0; --x) {
-        if (height[x] > 12 || height[x + 1] > 12 || (height[2] > 10 && (x == 1 || x == 2))) {
-            continue;
-        }
-
-        result[count] = Placement { uint8_t(x), Rotation::RIGHT };
-        ++count;
-    }
-
-    for (int8_t x = 5; x > 0; --x) {
-        if (height[x] > 12 || height[x - 1] > 12 || (height[2] > 10 && (x == 2 || x == 3))) {
-            continue;
-        }
-
-        result[count] = Placement { uint8_t(x), Rotation::LEFT };
-        ++count;
-    }
-
-    for (int8_t x = 5; x >= 0; --x) {
-        if (height[x] > 11 || (height[2] > 9 && x == 2)) {
-            continue;
-        }
-
-        result[count] = Placement { uint8_t(x), Rotation::UP };
-        ++count;
-    }
-
-    for (int8_t x = 5; x >= 0; --x) {
-        if (height[x] > 11 || (height[2] > 9 && x == 2)) {
-            continue;
-        }
-
-        result[count] = Placement { uint8_t(x), Rotation::DOWN };
-        ++count;
-    }
-};
-
 static void bench_genmove(Field field, int iter)
 {
     using namespace std;

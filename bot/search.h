@@ -6,6 +6,8 @@
 namespace LTPuyo
 {
 
+constexpr int TRIGGER_POINT = 18;
+
 struct SearchScore
 {
     int attack = 0;
