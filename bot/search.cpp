@@ -3,14 +3,14 @@
 namespace LTPuyo
 {
 
-void Search::search(Field field, std::vector<std::pair<Puyo, Puyo>> queue, SearchInfo& result, Heuristic heuristic)
+void Search::search(Field field, std::vector<std::pair<Puyo, Puyo>> queue, SearchInfo& result, int trigger_point, int max_harass, Heuristic heuristic)
 {
     if (queue.size() < 2) {
         return;
     }
 
     result = SearchInfo();
-    result.candidate.reserve(22);
+    result.candidate.clear();
 
     Node node = Node();
     node.field = field;
@@ -27,8 +27,7 @@ void Search::search(Field field, std::vector<std::pair<Puyo, Puyo>> queue, Searc
     Generator::generate(node.field, queue[0], placement);
     result.node += placement.get_size();
 
-    std::vector<SearchCandidate> ncandidate;
-    ncandidate.reserve(22);
+    avec<SearchCandidate, 22> ncandidate;
 
     for (int i = 0; i < placement.get_size(); ++i) {
         SearchCandidate candidate = { node, placement[i], SearchScore() };
@@ -37,36 +36,36 @@ void Search::search(Field field, std::vector<std::pair<Puyo, Puyo>> queue, Searc
         candidate.node.field.drop_pair(placement[i].x, pair, placement[i].rotation);
         candidate.node.field.pop(chain);
 
-        if (chain.count == 0) {
+        if (chain.count <= max_harass) {
             evaluator.evaluate(candidate.node, node, placement[i], pair);
             ttable.add_entry(ttable.hash(candidate.node.field), 0);
-            ncandidate.push_back(candidate);
+            ncandidate.add(candidate);
         }
         else {
             candidate.score.attack = Field::calculate_point(chain);
             candidate.score.chain = chain.count;
-            result.candidate.push_back(candidate);
+            result.candidate.add(candidate);
         }
     }
 
-    if (!ncandidate.empty()) {
+    if (ncandidate.get_size() > 0) {
         std::sort
         (
-            ncandidate.begin(),
-            ncandidate.end(),
+            ncandidate.iter_begin(),
+            ncandidate.iter_end(),
             [&] (const SearchCandidate& a, const SearchCandidate& b) {
                 return b.node < a.node;
             }
         );
     }
 
-    for (auto c : ncandidate) {
-        c.nscore = Search::nsearch(c.node, queue, evaluator, ttable, 1, result.node);
-        result.candidate.push_back(c);
+    for (int i = 0; i < ncandidate.get_size(); ++i) {
+        ncandidate[i].nscore = Search::nsearch(ncandidate[i].node, queue, evaluator, ttable, 1, trigger_point, max_harass, result.node);
+        result.candidate.add(ncandidate[i]);
     }
 };
 
-SearchScore Search::nsearch(Node& node, std::vector<std::pair<Puyo, Puyo>>& queue, Evaluator& evaluator, TTable& ttable, int depth, int& node_count)
+SearchScore Search::nsearch(Node& node, std::vector<std::pair<Puyo, Puyo>>& queue, Evaluator& evaluator, TTable& ttable, int depth, int trigger_point, int max_harass, int& node_count)
 {
     SearchScore score = SearchScore();
 
@@ -87,15 +86,15 @@ SearchScore Search::nsearch(Node& node, std::vector<std::pair<Puyo, Puyo>>& queu
             continue;
         }
 
-        if (chain.count == 0) {
+        if (chain.count <= max_harass) {
             evaluator.evaluate(child, node, placement[i], pair);
             if (ttable.add_entry(ttable.hash(child.field), depth)) {
                 if (depth + 1 < queue.size()) {
                     children.add(child);
                 }
                 else {
-                    if (6 * 13 - node.field.popcount() > TRIGGER_POINT) {
-                        SearchScore qscore = Search::qsearch(child, evaluator, ttable, 0, 2, node_count);
+                    if (6 * 13 - node.field.popcount() > trigger_point) {
+                        SearchScore qscore = Search::qsearch(child, node_count);
                         score.attack = std::max(score.attack, qscore.attack);
                         score.chain = std::max(score.chain, qscore.chain);
                         score.eval = std::max(score.eval, qscore.eval);
@@ -122,7 +121,7 @@ SearchScore Search::nsearch(Node& node, std::vector<std::pair<Puyo, Puyo>>& queu
     }
 
     for (int i = 0; i < children.get_size(); ++i) {
-        SearchScore nscore = nsearch(children[i], queue, evaluator, ttable, depth + 1, node_count);
+        SearchScore nscore = nsearch(children[i], queue, evaluator, ttable, depth + 1, trigger_point, max_harass, node_count);
         score.attack = std::max(score.attack, nscore.attack);
         score.chain = std::max(score.chain, nscore.chain);
         score.eval = std::max(score.eval, nscore.eval);
@@ -131,7 +130,7 @@ SearchScore Search::nsearch(Node& node, std::vector<std::pair<Puyo, Puyo>>& queu
     return score;
 };
 
-SearchScore Search::qsearch(Node& node, Evaluator& evaluator, TTable& ttable, int depth, int limit, int& node_count)
+SearchScore Search::qsearch(Node& node, int& node_count)
 {
     SearchScore score = SearchScore();
 
@@ -142,6 +141,10 @@ SearchScore Search::qsearch(Node& node, Evaluator& evaluator, TTable& ttable, in
 
         for (int i = 0; i < placement.get_size(); ++i) {
             if (placement[i].rotation != Rotation::RIGHT) {
+                continue;
+            }
+
+            if (std::abs(node.field.get_height(placement[i].x) - node.field.get_height(placement[i].x + 1)) > 1) {
                 continue;
             }
 

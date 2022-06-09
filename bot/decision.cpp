@@ -5,33 +5,54 @@ namespace LTPuyo
 
 void Decision::decide(Field field, SearchInfo& search_info, SearchCandidate& result)
 {
-    if (search_info.candidate.empty()) {
+    if (search_info.candidate.get_size() == 0) {
         return;
     }
 
-    std::vector<SearchCandidate> have_chain;
-    std::vector<SearchCandidate> have_nchain;
-    std::vector<SearchCandidate> have_neval;
+    avec<SearchCandidate, 22> have_chain;
+    avec<SearchCandidate, 22> have_nchain;
+    avec<SearchCandidate, 22> have_neval;
 
-    for (auto candidate : search_info.candidate) {
-        if (candidate.score.chain > 0) {
-            have_chain.push_back(candidate);
-            continue;
-        }
-        if (candidate.nscore.chain > 0) {
-            have_nchain.push_back(candidate);
-            continue;
-        }
-        have_neval.push_back(candidate);
+    Decision::classify_candidate(search_info, have_chain, have_nchain, have_neval);
+
+    int max_chain_point = 0;
+    if (have_chain.get_size() > 0) {
+        max_chain_point = std::max(max_chain_point, have_chain[0].score.attack);
+    }
+    if (have_nchain.get_size() > 0) {
+        max_chain_point = std::max(max_chain_point, have_nchain[0].score.attack);
     }
 
-    if (!have_chain.empty()) {
+    if (13 * 6 - field.popcount() <= 18 || max_chain_point >= 52840) {
+        Decision::action_execute_biggest_chain(have_chain, have_nchain, have_neval, result);
+        return;
+    }
+    else {
+        Decision::action_build(have_chain, have_nchain, have_neval, result);
+        return;
+    }
+};
+
+void Decision::classify_candidate(SearchInfo& search_info, avec<SearchCandidate, 22>& have_chain, avec<SearchCandidate, 22>& have_nchain, avec<SearchCandidate, 22>& have_neval)
+{
+    for (int i = 0; i < search_info.candidate.get_size(); ++i) {
+        if (search_info.candidate[i].score.chain > 0) {
+            have_chain.add(search_info.candidate[i]);
+            continue;
+        }
+        if (search_info.candidate[i].nscore.chain > 0) {
+            have_nchain.add(search_info.candidate[i]);
+            continue;
+        }
+        have_neval.add(search_info.candidate[i]);
+    }
+
+    if (!have_chain.get_size() == 0) {
         std::sort
         (
-            have_chain.begin(),
-            have_chain.end(),
+            have_chain.iter_begin(),
+            have_chain.iter_end(),
             [&] (const SearchCandidate& a, const SearchCandidate& b) {
-                // return b.score.attack < a.score.attack;
                 if (b.score.chain == a.score.chain) {
                     return b.score.attack < a.score.attack;
                 }
@@ -40,71 +61,71 @@ void Decision::decide(Field field, SearchInfo& search_info, SearchCandidate& res
         );
     }
 
-    if (!have_nchain.empty()) {
+    if (!have_nchain.get_size() == 0) {
         std::sort
         (
-            have_nchain.begin(),
-            have_nchain.end(),
+            have_nchain.iter_begin(),
+            have_nchain.iter_end(),
             [&] (const SearchCandidate& a, const SearchCandidate& b) {
                 if (b.nscore.chain == a.nscore.chain) {
-                    return b.node.score < a.node.score;
+                    // return b.node.score < a.node.score;
+                    return b.nscore.eval < a.nscore.eval;
                 }
                 return b.nscore.chain < a.nscore.chain;
             }
         );
     }
 
-    if (!have_neval.empty()) {
+    if (!have_neval.get_size() == 0) {
         std::sort
         (
-            have_neval.begin(),
-            have_neval.end(),
+            have_neval.iter_begin(),
+            have_neval.iter_end(),
             [&] (const SearchCandidate& a, const SearchCandidate& b) {
                 return b.nscore.eval < a.nscore.eval;
             }
         );
     }
+};
 
-    int height[6];
-    field.get_height(height);
-    int remain_empty = 0;
-    for (int i = 0; i < 6; ++i) {
-        remain_empty += 13 - height[i];
+void Decision::action_build(avec<SearchCandidate, 22>& have_chain, avec<SearchCandidate, 22>& have_nchain, avec<SearchCandidate, 22>& have_neval, SearchCandidate& result)
+{
+    if (!have_neval.get_size() == 0) {
+        result = have_neval[0];
     }
+    if (!have_nchain.get_size() == 0) {
+        result = have_nchain[0];
+        return;
+    }
+    if (!have_chain.get_size() == 0) {
+        result = have_chain[0];
+    }
+};
 
-    if (remain_empty <= TRIGGER_POINT) {
-        if (!have_nchain.empty()) {
-            std::sort
-            (
-                have_nchain.begin(),
-                have_nchain.end(),
-                [&] (const SearchCandidate& a, const SearchCandidate& b) {
-                    if (b.nscore.chain == a.nscore.chain) {
-                        return b.nscore.attack < a.nscore.attack;
-                    }
-                    return b.nscore.chain < a.nscore.chain;
+void Decision::action_execute_biggest_chain(avec<SearchCandidate, 22>& have_chain, avec<SearchCandidate, 22>& have_nchain, avec<SearchCandidate, 22>& have_neval, SearchCandidate& result)
+{
+    if (!have_nchain.get_size() == 0) {
+        std::sort
+        (
+            have_nchain.iter_begin(),
+            have_nchain.iter_end(),
+            [&] (const SearchCandidate& a, const SearchCandidate& b) {
+                if (b.nscore.chain == a.nscore.chain) {
+                    return b.nscore.attack < a.nscore.attack;
                 }
-            );
-        }
-
-        if (!have_neval.empty()) {
-            result = have_neval[0];
-        }
-        if (!have_nchain.empty()) {
-            result = have_nchain[0];
-        }
-        // if (!have_chain.empty() && have_chain[0].score.attack > result.nscore.attack) {
-        if (!have_chain.empty() && have_chain[0].score.chain > result.nscore.chain) {
-            result = have_chain[0];
-        }
+                return b.nscore.chain < a.nscore.chain;
+            }
+        );
     }
-    else {
-        if (!have_neval.empty()) {
-            result = have_neval[0];
-        }
-        if (!have_nchain.empty()) {
-            result = have_nchain[0];
-        }
+
+    if (!have_neval.get_size() == 0) {
+        result = have_neval[0];
+    }
+    if (!have_nchain.get_size() == 0) {
+        result = have_nchain[0];
+    }
+    if (!have_chain.get_size() == 0 && have_chain[0].score.chain > result.nscore.chain) {
+        result = have_chain[0];
     }
 };
 

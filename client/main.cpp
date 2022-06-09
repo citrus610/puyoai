@@ -177,7 +177,7 @@ int main()
         SearchInfo sinfo;
 
         auto time_1 = chrono::high_resolution_clock::now();
-        Search::search(field, tqueue, sinfo, heuristic);
+        Search::search(field, tqueue, sinfo, 18, 0, heuristic);
         auto time_2 = chrono::high_resolution_clock::now();
 
         int64_t time = chrono::duration_cast<chrono::microseconds>(time_2 - time_1).count();
@@ -210,7 +210,7 @@ int main()
         clear();
 
         FieldMono pop_mask = FieldMono();
-        bool color[6];
+        int color = 0;
         field.poppable_mask(pop_mask, color);
         int chain = 1;
 

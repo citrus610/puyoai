@@ -6,8 +6,6 @@
 namespace LTPuyo
 {
 
-constexpr int TRIGGER_POINT = 18;
-
 struct SearchScore
 {
     int attack = 0;
@@ -25,16 +23,16 @@ struct SearchCandidate
 
 struct SearchInfo
 {
-    std::vector<SearchCandidate> candidate;
+    avec<SearchCandidate, 22> candidate;
     int node = 0;
 };
 
 class Search
 {
 public:
-    static void search(Field field, std::vector<std::pair<Puyo, Puyo>> queue, SearchInfo& result, Heuristic heuristic = DEFAULT_HEURISTIC());
-    static SearchScore nsearch(Node& node, std::vector<std::pair<Puyo, Puyo>>& queue, Evaluator& evaluator, TTable& ttable, int depth, int& node_count);
-    static SearchScore qsearch(Node& node, Evaluator& evaluator, TTable& ttable, int depth, int limit, int& node_count);
+    static void search(Field field, std::vector<std::pair<Puyo, Puyo>> queue, SearchInfo& result, int trigger_point, int max_harass, Heuristic heuristic = DEFAULT_HEURISTIC());
+    static SearchScore nsearch(Node& node, std::vector<std::pair<Puyo, Puyo>>& queue, Evaluator& evaluator, TTable& ttable, int depth, int trigger_point, int max_harass, int& node_count);
+    static SearchScore qsearch(Node& node, int& node_count);
 };
 
 };

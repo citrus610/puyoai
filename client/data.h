@@ -16,6 +16,7 @@ namespace LTPuyo
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(HeuristicAccumulate,
     connection,
     connection_horizontal,
+    connection_vertical_side,
     disconnection
 )
 
@@ -23,7 +24,8 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(HeuristicEvaluation,
     bumpiness,
     bumpiness_sq,
     sidewell,
-    sidewell_sq
+    sidewell_sq,
+    valley_sq
 )
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Heuristic, accumulate, evaluation)

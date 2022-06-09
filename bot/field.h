@@ -65,8 +65,8 @@ using Pair = std::pair<Puyo, Puyo>;
 struct Chain
 {
     int link[19] = { 0 };
+    int color[19] = { 0 };
     int count = 0;
-    bool color[Puyo::COUNT - 1] = { false };
 };
 
 class FieldMono
@@ -93,6 +93,7 @@ public:
     Puyo get_puyo(int x, int y);
     void get_height(int height[6]);
     int get_height(int x);
+    int get_height_max();
 public:
     bool is_occupied(int height[6], int x, int y);
     bool is_colliding(int height[6], int x, int y, Rotation r);
@@ -103,7 +104,7 @@ public:
     void drop_pair(int x, Puyo puyo[2], Rotation rotation);
     void drop_pair(int x, Pair pair, Rotation rotation);
 public:
-    void poppable_mask(FieldMono& mask, bool color[Puyo::COUNT - 1]);
+    void poppable_mask(FieldMono& mask, int& color);
     void pop(Chain& chain);
 public:
     static int calculate_point(Chain& chain);

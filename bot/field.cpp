@@ -90,6 +90,15 @@ int Field::get_height(int x)
     return 16 - std::countl_zero(column_or);
 };
 
+int Field::get_height_max()
+{
+    int result = 0;
+    for (int i = 0; i < 6; ++i) {
+        result = std::max(result, this->get_height(i));
+    }
+    return result;
+};
+
 bool Field::is_occupied(int height[6], int x, int y)
 {
     if (x < 0 || x > 5 || y < 0) {
@@ -167,20 +176,21 @@ void Field::drop_pair(int x, Pair pair, Rotation rotation)
     }
 };
 
-void Field::poppable_mask(FieldMono& mask, bool color[Puyo::COUNT - 1])
+void Field::poppable_mask(FieldMono& mask, int& color)
 {
+    color = 0;
     for (uint8_t puyo = Puyo::RED; puyo < Puyo::COUNT - 1; ++puyo) {
         FieldMonoSlice field_mono_slice;
         field_mono_slice.from(this->puyo[puyo]);
         bool color_pop = field_mono_slice.find_poppable_mask(mask);
-        color[puyo] = color[puyo] || color_pop;
+        color += color_pop;
     }
 };
 
 void Field::pop(Chain& chain)
 {
     FieldMono poppable;
-    this->poppable_mask(poppable, chain.color);
+    this->poppable_mask(poppable, chain.color[chain.count]);
 
     int poppable_count = poppable.popcount();
     if (poppable_count == 0) {
@@ -206,25 +216,18 @@ void Field::pop(Chain& chain)
 
 int Field::calculate_point(Chain& chain)
 {
-    int puyo_cleared = 0;
+    int result = 0;
+
     for (int i = 0; i < chain.count; ++i) {
-        puyo_cleared += chain.link[i];
+        int puyo_cleared = chain.link[i];
+        int color_bonus = CHAIN_COLOR_BONUS[std::min(chain.color[i], CHAIN_COLOR_BONUS_SIZE - 1)];
+        int group_bonus = CHAIN_GROUP_BONUS[std::min(chain.link[i], CHAIN_GROUP_BONUS_SIZE - 1)];
+        int chain_power = CHAIN_POWER[chain.count];
+
+        result += 10 * puyo_cleared * std::clamp(color_bonus + group_bonus + chain_power, 1, 999);
     }
 
-    int color_bonus = 0;
-    for (int i = 0; i < Puyo::COUNT - 1; ++i) {
-        color_bonus += chain.color[i];
-    }
-    color_bonus = CHAIN_COLOR_BONUS[color_bonus];
-
-    int group_bonus = 0;
-    for (int i = 0; i < chain.count; ++i) {
-        group_bonus += CHAIN_GROUP_BONUS[std::min(chain.link[i], CHAIN_GROUP_BONUS_SIZE - 1)];
-    }
-
-    int chain_power = CHAIN_POWER[chain.count];
-
-    return 10 * puyo_cleared * (color_bonus + group_bonus + chain_power);
+    return result;
 };
 
 int Field::calculate_garbage(Chain& chain, int target_point, bool all_clear)

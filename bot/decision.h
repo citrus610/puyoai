@@ -5,10 +5,22 @@
 namespace LTPuyo
 {
 
+struct DecisionFactor
+{
+    int trigger_point = 18;
+    int trigger_point_enemy = 18;
+    int trigger_point_harass = 36;
+    int max_harass_chain = 2;
+};
+
 class Decision
 {
 public:
     static void decide(Field field, SearchInfo& search_info, SearchCandidate& result);
+    static void classify_candidate(SearchInfo& search_info, avec<SearchCandidate, 22>& have_chain, avec<SearchCandidate, 22>& have_nchain, avec<SearchCandidate, 22>& have_neval);
+public:
+    static void action_build(avec<SearchCandidate, 22>& have_chain, avec<SearchCandidate, 22>& have_nchain, avec<SearchCandidate, 22>& have_neval, SearchCandidate& result);
+    static void action_execute_biggest_chain(avec<SearchCandidate, 22>& have_chain, avec<SearchCandidate, 22>& have_nchain, avec<SearchCandidate, 22>& have_neval, SearchCandidate& result);
 };
 
 static void bench_search(int iter)
@@ -38,7 +50,7 @@ static void bench_search(int iter)
         SearchInfo sinfo;
 
         auto time_1 = chrono::high_resolution_clock::now();
-        Search::search(field, tqueue, sinfo);
+        Search::search(field, tqueue, sinfo, 18, 0);
         auto time_2 = chrono::high_resolution_clock::now();
 
         node_count += sinfo.node;
