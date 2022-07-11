@@ -10,69 +10,93 @@ void Evaluator::evaluate(Node& node, Node& parent, Placement placement, Puyo puy
     int height[6];
     node.field.get_height(height);
 
-    node.score.evaluation += Evaluator::bumpiness(height) * this->heuristic.evaluation.bumpiness;
-    node.score.evaluation += Evaluator::bumpiness_sq(height) * this->heuristic.evaluation.bumpiness_sq;
+    node.score.evaluation += height[2] * this->heuristic.evaluation.height_third_column;
 
-    node.score.evaluation += Evaluator::valley_sq(height) * this->heuristic.evaluation.valley_sq;
+    int height_min = height[0];
+    int height_max = height[0];
+    for (int i = 1; i < 6; ++i) {
+        if (height[i] < height_min) {
+            height_min = height[i];
+        }
+        if (height[i] > height_max) {
+            height_max = height[i];
+        }
+    }
 
-    int sidewell[2];
-    Evaluator::sidewell(height, sidewell);
-    node.score.evaluation += sidewell[0] * this->heuristic.evaluation.sidewell;
-    node.score.evaluation += sidewell[1] * this->heuristic.evaluation.sidewell_sq;
+    int well[2];
+    Evaluator::well(height, well);
+    node.score.evaluation += well[0] * this->heuristic.evaluation.well;
+    node.score.evaluation += well[1] * this->heuristic.evaluation.well_sq;
+
+    int bump[2];
+    Evaluator::bump(height, bump);
+    node.score.evaluation += bump[0] * this->heuristic.evaluation.bump;
+    node.score.evaluation += bump[1] * this->heuristic.evaluation.bump_sq;
+
+    int shape_u[2];
+    Evaluator::shape_u(height, shape_u);
+    node.score.evaluation += shape_u[0] * this->heuristic.evaluation.shape_u;
+    node.score.evaluation += shape_u[1] * this->heuristic.evaluation.shape_u_sq;
+
+    int side_bias = std::max(0, height[0] + height[1] + height[2] - height[3] - height[4] - height[5]);
+    node.score.evaluation += side_bias * this->heuristic.evaluation.side_bias;
 
     int connection[3];
     Evaluator::connection(parent.field, placement, puyo, connection);
     node.score.accumulate += connection[0] * this->heuristic.accumulate.connection;
     node.score.accumulate += connection[1] * this->heuristic.accumulate.connection_horizontal;
     node.score.accumulate += connection[2] * this->heuristic.accumulate.connection_vertical_side;
-    node.score.accumulate += (3 - connection[0]) * this->heuristic.accumulate.disconnection;
 };
 
-int Evaluator::bumpiness(int height[6])
-{
-    int result = 0;
-    result += std::abs(height[0] - height[1]);
-    result += std::abs(height[1] - height[2]);
-    result += std::abs(height[2] - height[3]);
-    result += std::abs(height[3] - height[4]);
-    result += std::abs(height[4] - height[5]);
-    return result;
-};
-
-int Evaluator::bumpiness_sq(int height[6])
-{
-    int result = 0;
-    result += (std::abs(height[0] - height[1]) + std::abs(height[1] - height[2])) * (std::abs(height[0] - height[1]) + std::abs(height[1] - height[2]));
-    result += (std::abs(height[3] - height[4]) + std::abs(height[4] - height[5])) * (std::abs(height[3] - height[4]) + std::abs(height[4] - height[5]));
-    return result;
-};
-
-int Evaluator::valley_sq(int height[6])
-{
-    int result = 0;
-
-    if (height[0] + height[1] - height[2] - height[3] < 0) {
-        result += (height[0] + height[1] - height[2] - height[3]) * (height[0] + height[1] - height[2] - height[3]) / 4;
-    }
-
-    if (height[4] + height[5] - height[2] - height[3] < 0) {
-        result += (height[4] + height[5] - height[2] - height[3]) * (height[4] + height[5] - height[2] - height[3]) / 4;
-    }
-
-    return result;
-};
-
-void Evaluator::sidewell(int height[6], int result[2])
+void Evaluator::well(int height[6], int result[2])
 {
     result[0] = 0;
     result[1] = 0;
-    if (height[1] > height[0]) {
-        result[0] += height[1] - height[0];
-        result[1] += (height[1] - height[0]) * (height[1] - height[0]);
+
+    for (int i = 1; i < 5; ++i) {
+        int value = std::min(std::max(0, height[i - 1] - height[i]), std::max(0, height[i + 1] - height[i]));
+        result[0] += value;
+        result[1] += value * value;
     }
-    if (height[4] > height[5]) {
-        result[0] += height[4] - height[5];
-        result[1] += (height[4] - height[5]) * (height[4] - height[5]);
+
+    int value_0 = std::max(0, height[1] - height[0]);
+    int value_5 = std::max(0, height[4] - height[5]);
+
+    result[0] += value_0 + value_5;
+    result[1] += value_0 * value_0 + value_5 * value_5;
+};
+
+void Evaluator::bump(int height[6], int result[2])
+{
+    result[0] = 0;
+    result[1] = 0;
+
+    for (int i = 0; i < 5; ++i) {
+        int value = std::abs(height[i] - height[i + 1]);
+        result[0] += value;
+        result[1] += value * value;
+    }
+};
+
+void Evaluator::shape_u(int height[6], int result[2])
+{
+    result[0] = 0;
+    result[1] = 0;
+
+    for (int i = 0; i < 2; ++i) {
+        if (height[i] < height[i + 1]) {
+            int value = height[i + 1] - height[i];
+            result[0] += value;
+            result[1] += value * value;
+        }
+    }
+
+    for (int i = 3; i < 5; ++i) {
+        if (height[i] > height[i + 1]) {
+            int value = height[i] - height[i + 1];
+            result[0] += value;
+            result[1] += value * value;
+        }
     }
 };
 

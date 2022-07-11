@@ -69,10 +69,7 @@ bool Position::move_180(Field& field, int height[6])
     }
 
     Rotation new_rotation = Rotation((this->rotation + 2) & 0b11);
-
-    if (new_rotation == Rotation::DOWN && this->y == height[this->x]) {
-        ++this->y;
-    }
+    this->y += new_rotation - 1;
 
     this->rotation = new_rotation;
     return true;
@@ -225,22 +222,22 @@ void Generator::expand(Field& field, int height[6], Position& position, avec<Pos
     }
 
     Position cw = position;
-    if (cw.move_cw(field, height) && !queue_map.get(cw.x, cw.y, cw.rotation)) {
+    if (cw.move_cw(field, height) && !queue_map.get(cw.x, cw.y, cw.rotation) && cw.y < 13 && cw.y + ROTATION_OFFSET[cw.rotation][1] < 13) {
         queue.add(cw);
         queue_map.set(cw.x, cw.y, cw.rotation, true);
     }
 
     Position ccw = position;
-    if (ccw.move_ccw(field, height) && !queue_map.get(ccw.x, ccw.y, ccw.rotation)) {
+    if (ccw.move_ccw(field, height) && !queue_map.get(ccw.x, ccw.y, ccw.rotation) && ccw.y < 13 && ccw.y + ROTATION_OFFSET[ccw.rotation][1] < 13) {
         queue.add(ccw);
         queue_map.set(ccw.x, ccw.y, ccw.rotation, true);
     }
 
-    Position m180 = position;
-    if (m180.move_180(field, height) && !queue_map.get(m180.x, m180.y, m180.rotation)) {
-        queue.add(m180);
-        queue_map.set(m180.x, m180.y, m180.rotation, true);
-    }
+    // Position m180 = position;
+    // if (m180.move_180(field, height) && !queue_map.get(m180.x, m180.y, m180.rotation) && m180.y < 13 && m180.y + ROTATION_OFFSET[m180.rotation][1] < 13) {
+    //     queue.add(m180);
+    //     queue_map.set(m180.x, m180.y, m180.rotation, true);
+    // }
 };
 
 void Generator::lock(Field& field, int height[6], Position& position, avec<Placement, 22>& locks, PlacementMap& locks_map, bool equal_pair)

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "search.h"
+#include "path.h"
 
 namespace LTPuyo
 {

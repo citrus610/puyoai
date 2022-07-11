@@ -93,12 +93,11 @@ SearchScore Search::nsearch(Node& node, std::vector<std::pair<Puyo, Puyo>>& queu
                     children.add(child);
                 }
                 else {
-                    if (6 * 13 - node.field.popcount() > trigger_point) {
-                        SearchScore qscore = Search::qsearch(child, node_count);
-                        score.attack = std::max(score.attack, qscore.attack);
-                        score.chain = std::max(score.chain, qscore.chain);
-                        score.eval = std::max(score.eval, qscore.eval);
-                    }
+                    // if (6 * 13 - node.field.popcount() > trigger_point) {
+                    SearchScore qscore = Search::qsearch(child, node_count);
+                    score.attack = std::max(score.attack, qscore.attack);
+                    score.chain = std::max(score.chain, qscore.chain);
+                    // }
                     score.eval = std::max(score.eval, child.score.accumulate + child.score.evaluation);
                 }
             }

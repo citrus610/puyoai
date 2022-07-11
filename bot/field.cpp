@@ -53,6 +53,21 @@ FieldMono FieldMono::operator & (const FieldMono& other)
     return result;
 };
 
+bool FieldMono::operator == (const FieldMono& other)
+{
+    for (int i = 0; i < 6; ++i) {
+        if (this->column[i] != other.column[i]) {
+            return false;
+        }
+    }
+    return true;
+};
+
+bool FieldMono::operator != (const FieldMono& other)
+{
+    return !(*this == other);
+};
+
 void Field::set_puyo(int x, int y, Puyo puyo)
 {
     assert(x >= 0 && x < 6);
@@ -220,11 +235,19 @@ int Field::calculate_point(Chain& chain)
 
     for (int i = 0; i < chain.count; ++i) {
         int puyo_cleared = chain.link[i];
-        int color_bonus = CHAIN_COLOR_BONUS[std::min(chain.color[i], CHAIN_COLOR_BONUS_SIZE - 1)];
-        int group_bonus = CHAIN_GROUP_BONUS[std::min(chain.link[i], CHAIN_GROUP_BONUS_SIZE - 1)];
-        int chain_power = CHAIN_POWER[chain.count];
+        int color_bonus = CHAIN_COLOR_BONUS[chain.color[i]];
+        int group_bonus = CHAIN_GROUP_BONUS[puyo_cleared];
+        int chain_power = CHAIN_POWER[i + 1];
 
-        result += 10 * puyo_cleared * std::clamp(color_bonus + group_bonus + chain_power, 1, 999);
+        int mul_factor = color_bonus + group_bonus + chain_power;
+        if (mul_factor < 1) {
+            mul_factor = 1;
+        }
+        else if (mul_factor > 999) {
+            mul_factor = 999;
+        }
+
+        result += 10 * puyo_cleared * mul_factor;
     }
 
     return result;
@@ -233,6 +256,21 @@ int Field::calculate_point(Chain& chain)
 int Field::calculate_garbage(Chain& chain, int target_point, bool all_clear)
 {
     return Field::calculate_point(chain) / target_point + all_clear * 30;
+};
+
+bool Field::operator == (const Field& other)
+{
+    for (int i = 0; i < Puyo::COUNT; ++i) {
+        if (this->puyo[i] != other.puyo[i]) {
+            return false;
+        }
+    }
+    return true;
+};
+
+bool Field::operator != (const Field& other)
+{
+    return !(*this == other);
 };
 
 void Field::from(const char c[13][7])
@@ -264,22 +302,19 @@ void Field::print()
     cout << endl;
 };
 
-void Slice::from(uint16_t column)
+void Slice::from(int16_t column)
 {
     if (column == 0) {
         return;
     }
     column &= (1 << 12) - 1;
     this->size = 0;
-    int accumulate_y = 0;
-    while (accumulate_y < 13) {
-        int tzcnt = std::countr_zero(column);
-        column = column >> tzcnt;
-        int tocnt = std::countr_one(column);
-        column = column >> tocnt;
-        this->data[this->size] = ((1 << tocnt) - 1) << (tzcnt + accumulate_y);
+    while (column) {
+        int16_t filled = column | (column - 1);
+        int16_t masked = (~filled & (filled + 1)) - 1;
+        this->data[this->size] = masked & column;
+        column ^= this->data[this->size];
         ++this->size;
-        accumulate_y += tzcnt + tocnt;
     }
 };
 

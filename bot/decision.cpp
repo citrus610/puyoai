@@ -23,7 +23,7 @@ void Decision::decide(Field field, SearchInfo& search_info, SearchCandidate& res
         max_chain_point = std::max(max_chain_point, have_nchain[0].score.attack);
     }
 
-    if (13 * 6 - field.popcount() <= 18 || max_chain_point >= 52840) {
+    if (13 * 6 - field.popcount() <= 18 || max_chain_point >= 56000) {
         Decision::action_execute_biggest_chain(have_chain, have_nchain, have_neval, result);
         return;
     }
@@ -68,7 +68,6 @@ void Decision::classify_candidate(SearchInfo& search_info, avec<SearchCandidate,
             have_nchain.iter_end(),
             [&] (const SearchCandidate& a, const SearchCandidate& b) {
                 if (b.nscore.chain == a.nscore.chain) {
-                    // return b.node.score < a.node.score;
                     return b.nscore.eval < a.nscore.eval;
                 }
                 return b.nscore.chain < a.nscore.chain;

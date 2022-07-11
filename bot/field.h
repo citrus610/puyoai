@@ -81,6 +81,9 @@ public:
 public:
     FieldMono operator | (const FieldMono& other);
     FieldMono operator & (const FieldMono& other);
+public:
+    bool operator == (const FieldMono& other);
+    bool operator != (const FieldMono& other);
 };
 
 class Field
@@ -110,6 +113,9 @@ public:
     static int calculate_point(Chain& chain);
     static int calculate_garbage(Chain& chain, int target_point = 70, bool all_clear = false);
 public:
+    bool operator == (const Field& other);
+    bool operator != (const Field& other);
+public:
     void from(const char c[13][7]);
     void print();
 };
@@ -120,7 +126,7 @@ public:
     uint16_t data[7] = { 0 };
     uint16_t size;
 public:
-    void from(uint16_t column);
+    void from(int16_t column);
     void erase(int idx);
 };
 
