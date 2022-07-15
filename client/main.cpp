@@ -23,16 +23,15 @@ Color pchar_to_color(char c)
     return COLOR_FG_BLACK;
 };
 
-std::vector<LTPuyo::Pair> create_queue()
+std::vector<Pair> create_queue()
 {
-    using namespace LTPuyo;
     using namespace std;
 
     vector<Puyo> bag;
     bag.reserve(256);
 
     for (int i = 0; i < 64; ++i) {
-        for (uint8_t p = 0; p < Puyo::COUNT - 1; ++p) {
+        for (uint8_t p = 0; p < static_cast<uint8_t>(Puyo::COUNT) - 1; ++p) {
             bag.push_back(Puyo(p));
         }
     }
@@ -56,9 +55,8 @@ std::vector<LTPuyo::Pair> create_queue()
     return queue;
 };
 
-void render_field(LTPuyo::Field field)
+void render_field(Field field)
 {
-    using namespace LTPuyo;
     using namespace std;
 
     draw_rectangle(0, 0, 8, 14, PIXEL_SOLID, COLOR_FG_WHITE);
@@ -73,9 +71,8 @@ void render_field(LTPuyo::Field field)
     }
 };
 
-void render_field(LTPuyo::Field field, LTPuyo::FieldMono mask)
+void render_field(Field field, FieldMono mask)
 {
-    using namespace LTPuyo;
     using namespace std;
 
     draw_rectangle(0, 0, 8, 14, PIXEL_SOLID, COLOR_FG_WHITE);
@@ -94,9 +91,8 @@ void render_field(LTPuyo::Field field, LTPuyo::FieldMono mask)
     }
 };
 
-void render_queue(std::pair<LTPuyo::Puyo, LTPuyo::Puyo> p1, std::pair<LTPuyo::Puyo, LTPuyo::Puyo> p2)
+void render_queue(std::pair<Puyo, Puyo> p1, std::pair<Puyo, Puyo> p2)
 {
-    using namespace LTPuyo;
     using namespace std;
 
     draw_rectangle(8, 0, 3, 7, PIXEL_SOLID, COLOR_FG_WHITE);
@@ -116,14 +112,14 @@ void render_queue(std::pair<LTPuyo::Puyo, LTPuyo::Puyo> p1, std::pair<LTPuyo::Pu
     draw(9, 5, PIXEL_CIRCLE, color);
 };
 
-void load_json_heuristic(LTPuyo::Heuristic& h)
+void load_json_heuristic(Heuristic& h)
 {
     std::ifstream file;
     file.open("config.json");
     json js;
     file >> js;
     file.close();
-    LTPuyo::from_json(js, h);
+    from_json(js, h);
 };
 
 void save_json_heuristic()
@@ -136,14 +132,13 @@ void save_json_heuristic()
 
     std::ofstream o("config.json");
     json js;
-    LTPuyo::to_json(js, LTPuyo::DEFAULT_HEURISTIC());
+    to_json(js, DEFAULT_HEURISTIC());
     o << std::setw(4) << js << std::endl;
     o.close();
 };
 
 int main()
 {
-    using namespace LTPuyo;
     using namespace std;
 
     create_window(16, 18, 50);
@@ -209,7 +204,7 @@ int main()
         Puyo pair[2] = { tqueue[0].first, tqueue[0].second };
 
         // field.drop_pair(scan.placement.x, pair, scan.placement.rotation);
-        field.drop_pair(airesult.placement.x, pair, airesult.placement.rotation);
+        field.drop_pair(airesult.placement.x, airesult.placement.rotation, pair);
 
         render_field(field);
         render_queue(tqueue[1], tqueue[2]);
@@ -231,7 +226,7 @@ int main()
             this_thread::sleep_for(chrono::milliseconds(time_wait));
             clear();
 
-            for (uint8_t puyo = Puyo::RED; puyo < Puyo::COUNT; ++puyo) {
+            for (uint8_t puyo = 0; puyo < static_cast<uint8_t>(Puyo::COUNT); ++puyo) {
                 for (int x = 0; x < 6; ++x) {
                     field.puyo[puyo].column[x] = pext16(field.puyo[puyo].column[x], ~pop_mask.column[x]);
                 }

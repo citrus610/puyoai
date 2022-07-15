@@ -8,10 +8,7 @@
 using json = nlohmann::json;
 using order_json = nlohmann::ordered_json;
 
-#include "../bot/decision.h"
-
-namespace LTPuyo
-{
+#include "../bot/ai.h"
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(HeuristicAccumulate,
     connection,
@@ -31,5 +28,3 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(HeuristicEvaluation,
 )
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Heuristic, accumulate, evaluation)
-
-};
