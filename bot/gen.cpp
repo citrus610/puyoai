@@ -231,7 +231,7 @@ void Generator::expand(Field& field, int height[6], Position& position, avec<Pos
     }
 
     // Position m180 = position;
-    // if (m180.move_180(field, height) && !queue_map.get(m180.x, m180.y, m180.rotation) && m180.y < 13 && m180.y + ROTATION_OFFSET[m180.rotation][1] < 13) {
+    // if (m180.move_180(field, height) && !queue_map.get(m180.x, m180.y, m180.rotation) && m180.y < 13 && m180.y + ROTATION_OFFSET[static_cast<uint8_t>(m180.rotation)][1] < 13) {
     //     queue.add(m180);
     //     queue_map.set(m180.x, m180.y, m180.rotation, true);
     // }

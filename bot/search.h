@@ -2,6 +2,7 @@
 
 #include "eval.h"
 #include "ttable.h"
+#include "detect.h"
 
 struct SearchScore
 {
@@ -29,5 +30,4 @@ class Search
 public:
     static void search(Field field, std::vector<Pair> queue, SearchResult& result, int max_harass, Heuristic heuristic = DEFAULT_HEURISTIC());
     static SearchScore nsearch(Node& node, std::vector<Pair>& queue, Evaluator& evaluator, TTable& ttable, int max_harass, int depth, int& node_count);
-    static SearchScore qsearch(Node& node, int& node_count);
 };

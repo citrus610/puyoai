@@ -2,6 +2,12 @@
 
 void Evaluator::evaluate(Node& node, Node& parent, Placement placement, Pair pair)
 {
+    Evaluator::evaluate_evaluation(node);
+    Evaluator::evaluate_accumulate(node, parent, placement, pair);
+};
+
+void Evaluator::evaluate_evaluation(Node& node)
+{
     node.score.evaluation = 0;
 
     int height[6];
@@ -20,6 +26,10 @@ void Evaluator::evaluate(Node& node, Node& parent, Placement placement, Pair pai
         }
     }
 
+    int height_delta = height_max - height_min;
+    node.score.evaluation += height_delta * this->heuristic.evaluation.height_delta;
+    node.score.evaluation += height_delta * height_delta * this->heuristic.evaluation.height_delta_sq;
+
     int well[2];
     Evaluator::well(height, well);
     node.score.evaluation += well[0] * this->heuristic.evaluation.well;
@@ -35,14 +45,68 @@ void Evaluator::evaluate(Node& node, Node& parent, Placement placement, Pair pai
     node.score.evaluation += shape_u[0] * this->heuristic.evaluation.shape_u;
     node.score.evaluation += shape_u[1] * this->heuristic.evaluation.shape_u_sq;
 
-    int side_bias = std::max(0, height[0] + height[1] + height[2] - height[3] - height[4] - height[5]);
+    int side_bias = std::abs(height[0] + height[1] + height[2] - height[3] - height[4] - height[5]);
     node.score.evaluation += side_bias * this->heuristic.evaluation.side_bias;
 
-    int connection[3];
-    Evaluator::connection(parent.field, placement, pair, connection);
-    node.score.accumulate += connection[0] * this->heuristic.accumulate.connection;
-    node.score.accumulate += connection[1] * this->heuristic.accumulate.connection_horizontal;
-    node.score.accumulate += connection[2] * this->heuristic.accumulate.connection_vertical_side;
+    int pattern_middle_y = Evaluator::pattern_middle_y(node.field);
+    node.score.evaluation += pattern_middle_y * this->heuristic.evaluation.pattern_middle_y;
+
+    int pattern_left_l = Evaluator::pattern_left_l(node.field);
+    node.score.evaluation += pattern_left_l * this->heuristic.evaluation.pattern_left_l;
+};
+
+void Evaluator::evaluate_accumulate(Node& node, Node& parent, Placement placement, Pair pair)
+{
+    Field previous_field = parent.field;
+
+    // Place 1st puyo
+    Puyo puyo[2] = { pair.first, pair.second };
+    if (placement.rotation == Rotation::DOWN) {
+        puyo[0] = pair.second;
+        puyo[1] = pair.first;
+    }
+
+    int height[6];
+    previous_field.get_height(height);
+
+    // Link count
+    int link[4] = { 0, 0, 0, 0 };
+    Evaluator::link(previous_field, height, placement.x, puyo[0], link);
+    node.score.accumulate += link[0] * this->heuristic.accumulate.link;
+    node.score.accumulate += link[1] * this->heuristic.accumulate.link_hor_bottom;
+    node.score.accumulate += link[2] * this->heuristic.accumulate.link_hor_left;
+    node.score.accumulate += link[3] * this->heuristic.accumulate.link_ver_side;
+
+    // Ugly placement
+    int ugly = Evaluator::ugly(previous_field, height, placement.x, puyo[0]);
+    node.score.accumulate += ugly * this->heuristic.accumulate.ugly;
+
+    // Place 2nd puyo
+    previous_field.set_puyo(placement.x, height[placement.x], puyo[0]);
+    ++height[placement.x];
+    
+    int second_puyo_x = placement.x;
+    if (placement.rotation == Rotation::RIGHT) {
+        ++second_puyo_x;
+    }
+    else if (placement.rotation == Rotation::LEFT) {
+        --second_puyo_x;
+    }
+
+    // Link count
+    link[0] = 0;
+    link[1] = 0;
+    link[2] = 0;
+    link[3] = 0;
+    Evaluator::link(previous_field, height, second_puyo_x, puyo[1], link);
+    node.score.accumulate += link[0] * this->heuristic.accumulate.link;
+    node.score.accumulate += link[1] * this->heuristic.accumulate.link_hor_bottom;
+    node.score.accumulate += link[2] * this->heuristic.accumulate.link_hor_left;
+    node.score.accumulate += link[3] * this->heuristic.accumulate.link_ver_side;
+
+    // Ugly placement
+    ugly = Evaluator::ugly(previous_field, height, second_puyo_x, puyo[1]);
+    node.score.accumulate += ugly * this->heuristic.accumulate.ugly;
 };
 
 void Evaluator::well(int height[6], int result[2])
@@ -97,43 +161,62 @@ void Evaluator::shape_u(int height[6], int result[2])
     }
 };
 
-void Evaluator::connection(Field previous, Placement placement, Pair pair, int result[3])
+int Evaluator::pattern_middle_y(Field& field)
 {
-    result[0] = 0;
-    result[1] = 0;
-    result[2] = 0;
+    int result = 0;
 
-    Puyo puyo[2] = { pair.first, pair.second };
-    if (placement.rotation == Rotation::DOWN) {
-        puyo[0] = pair.second;
-        puyo[1] = pair.first;
+    result += field.get_puyo(2, 0) == field.get_puyo(2, 2) && field.get_puyo(2, 0) == field.get_puyo(3, 1);
+
+    if (result) {
+        result += field.get_puyo(2, 0) == field.get_puyo(4, 1);
+        result += field.get_puyo(2, 0) == field.get_puyo(5, 1);
+        result += field.get_puyo(2, 0) == field.get_puyo(2, 3);
     }
-
-    int height[6];
-    previous.get_height(height);
-
-    result[0] += previous.get_puyo(placement.x - 1, height[placement.x]) == puyo[0];
-    result[0] += previous.get_puyo(placement.x + 1, height[placement.x]) == puyo[0];
-    result[0] += previous.get_puyo(placement.x, height[placement.x] - 1) == puyo[0];
-    result[1] += previous.get_puyo(placement.x - 1, height[placement.x]) == puyo[0] && height[placement.x] < 4;
-    result[1] += previous.get_puyo(placement.x + 1, height[placement.x]) == puyo[0] && height[placement.x] < 4;
-    result[2] += previous.get_puyo(placement.x, height[placement.x] - 1) == puyo[0] && (placement.x == 0 || placement.x == 5) && height[placement.x] > 0;
-
-    previous.set_puyo(placement.x, height[placement.x], puyo[0]);
-    ++height[placement.x];
     
-    int second_puyo_x = placement.x;
-    if (placement.rotation == Rotation::RIGHT) {
-        ++second_puyo_x;
-    }
-    else if (placement.rotation == Rotation::LEFT) {
-        --second_puyo_x;
-    }
+    return result;
+};
 
-    result[0] += previous.get_puyo(second_puyo_x - 1, height[second_puyo_x]) == puyo[1];
-    result[0] += previous.get_puyo(second_puyo_x + 1, height[second_puyo_x]) == puyo[1];
-    result[0] += previous.get_puyo(second_puyo_x, height[second_puyo_x] - 1) == puyo[1];
-    result[1] += previous.get_puyo(second_puyo_x - 1, height[second_puyo_x]) == puyo[1] && height[second_puyo_x] < 4;
-    result[1] += previous.get_puyo(second_puyo_x + 1, height[second_puyo_x]) == puyo[1] && height[second_puyo_x] < 4;
-    result[2] += previous.get_puyo(second_puyo_x, height[second_puyo_x] - 1) == puyo[1] && (second_puyo_x == 0 || second_puyo_x == 5) && height[second_puyo_x] > 0;
+int Evaluator::pattern_left_l(Field& field)
+{
+    return
+        (field.get_puyo(0, 1) == field.get_puyo(0, 2) && field.get_puyo(0, 1) == field.get_puyo(1, 1)) ||
+        (field.get_puyo(1, 1) == field.get_puyo(1, 2) && field.get_puyo(1, 1) == field.get_puyo(2, 1));
+};
+
+void Evaluator::link(Field& field, int height[6], int x, Puyo puyo, int result[4])
+{
+    // Normal limk count
+    result[0] += field.get_puyo(x - 1, height[x]) == puyo;
+    result[0] += field.get_puyo(x + 1, height[x]) == puyo;
+    result[0] += field.get_puyo(x, height[x] - 1) == puyo;
+
+    // Link count horizontal under height of 3 - link bottom
+    result[1] += field.get_puyo(x - 1, height[x]) == puyo && height[x] < 3;
+    result[1] += field.get_puyo(x + 1, height[x]) == puyo && height[x] < 3;
+
+    // Link count horizontal left side
+    result[2] += field.get_puyo(x - 1, height[x]) == puyo && height[x] > 2 && (x == 1 || x == 5);
+    result[2] += field.get_puyo(x + 1, height[x]) == puyo && height[x] > 2 && (x == 0 || x == 4);
+
+    // Link count vertical side
+    result[3] += field.get_puyo(x, height[x] - 1) == puyo && (x == 0 || x == 5) && height[x] > 0;
+};
+
+int Evaluator::ugly(Field& field, int height[6], int x, Puyo puyo)
+{
+    int result = 0;
+
+    // Ugly 1: same color across a well
+    result += x > 1 && height[x - 1] <= height[x] && height[x - 1] < height[x - 2] && (field.puyo[static_cast<int>(puyo)].column[x - 2] & (1 << height[x]));
+    result += x < 4 && height[x + 1] <= height[x] && height[x + 1] < height[x + 2] && (field.puyo[static_cast<int>(puyo)].column[x + 2] & (1 << height[x]));
+
+    // Ugly 2: same color above diagonally
+    result += x > 0 && height[x] < height[x - 1] && (field.puyo[static_cast<int>(puyo)].column[x - 1] & (1 << (height[x] + 1)));
+    result += x < 5 && height[x] < height[x + 1] && (field.puyo[static_cast<int>(puyo)].column[x + 1] & (1 << (height[x] + 1)));
+
+    // Ugly 3: same color below diagonally
+    result += x > 0 && height[x] == height[x - 1] && (field.puyo[static_cast<int>(puyo)].column[x - 1] & (1 << (height[x] - 1)));
+    result += x < 5 && height[x] == height[x + 1] && (field.puyo[static_cast<int>(puyo)].column[x + 1] & (1 << (height[x] - 1)));
+
+    return result;
 };
