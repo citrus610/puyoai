@@ -1,5 +1,17 @@
-# puyoai
+# Puyo Puyo Tsu AI
+An AI designed to play Puyo Puyo Tsu 1P and PVP. This project presently only compiles with `gcc` and runs on window.
 
-## build
-- `make USE_PEXT=true` for best performance, check your cpu if it has `pext`, or just `make` normaly.
-- for now only gcc and window
+## Build
+- Clone and `cd` to the repository.
+- Run `make` to build the client.
+- Run `make USE_PEXT=true` for best performance, check if your cpu supports `pext`.
+- Get the binary in `bin` folder.
+- For now only `gcc` and window.
+
+## Directory description
+- `core` - puyo puyo core logic implementation.
+- `bot` - the AI implementation.
+- `client` - the standalone client, for now only showing the AI playing 1P.
+
+## License
+This project is licensed under [MIT LICENSE](LICENSE).
