@@ -65,6 +65,19 @@ AiResult Ai::think_mono(Field& field, std::vector<Pair>& queue, int harass_trigg
         );
     }
 
+    // Go to all clear
+    for (int i = 0; i < search_result.candidate_attack.get_size(); ++i) {
+        if (search_result.candidate_attack[i].score.all_clear) {
+            return { search_result.candidate_attack[i].placement, MoveQueue(), search_result.node };
+        }
+    }
+
+    for (int i = 0; i < search_result.candidate.get_size(); ++i) {
+        if (search_result.candidate[i].score.all_clear) {
+            return { search_result.candidate[i].placement, MoveQueue(), search_result.node };
+        }
+    }
+
     // Take action: build chain or execute chain
     int max_chain_point = 0;
     if (search_result.candidate_attack.get_size() > 0) {
@@ -75,20 +88,6 @@ AiResult Ai::think_mono(Field& field, std::vector<Pair>& queue, int harass_trigg
     }
     if (13 * 6 - field_popcnt <= 16 || max_chain_point >= 56000) {
         // If the biggest chain point > C or the field's space left is < T then trigger the biggest chain possible
-        // if (search_result.candidate.get_size() > 0) {
-        //     std::sort
-        //     (
-        //         search_result.candidate.iter_begin(),
-        //         search_result.candidate.iter_end(),
-        //         [&] (const SearchCandidate& a, const SearchCandidate& b) {
-        //             if (b.score.chain_count == a.score.chain_count) {
-        //                 return b.score.chain_score < a.score.chain_score;
-        //             }
-        //             return b.score.chain_count < a.score.chain_count;
-        //         }
-        //     );
-        // }
-
         SearchCandidate best_candidate;
 
         if (search_result.candidate.get_size() > 0) {

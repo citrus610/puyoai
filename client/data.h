@@ -11,13 +11,13 @@ using order_json = nlohmann::ordered_json;
 #include "../bot/ai.h"
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(HeuristicAccumulate,
-    connection,
-    connection_horizontal,
-    connection_vertical_side
+    link,
+    link_hor_bottom,
+    link_ver_side
 )
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(HeuristicEvaluation,
-    height_third_column,
+    height_col_3,
     well,
     well_sq,
     bump,

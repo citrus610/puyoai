@@ -39,6 +39,8 @@ public:
     bool is_colliding(int height[6], int x, int y, Rotation r);
 public:
     int popcount();
+    int count_group(int x, int y);
+    void flood_fill_count(int height[6], bool visit[13][6], int x, int y, Puyo puyo, int& count);
 public:
     void drop_puyo(int x, Puyo puyo);
     void drop_pair(int x, Rotation rotation, Puyo puyo[2]);

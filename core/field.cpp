@@ -140,6 +140,41 @@ int Field::popcount()
     return height[0] + height[1] + height[2] + height[3] + height[4] + height[5];
 };
 
+int Field::count_group(int x, int y)
+{
+    int result = 0;
+
+    int height[6];
+    this->get_height(height);
+
+    bool visit[13][6] = { false };
+
+    this->flood_fill_count(height, visit, x, y, this->get_puyo(x, y), result);
+
+    return result;
+};
+
+void Field::flood_fill_count(int height[6], bool visit[13][6], int x, int y, Puyo puyo, int& count)
+{
+    ++count;
+    visit[y][x] = true;
+
+    for (int i = 0; i < 4; ++i) {
+        if (x + ROTATION_OFFSET[i][0] < 0 ||
+            x + ROTATION_OFFSET[i][0] > 5 ||
+            y + ROTATION_OFFSET[i][1] < 0 ||
+            y + ROTATION_OFFSET[i][1] > 12 ||
+            visit[y + ROTATION_OFFSET[i][1]][x + ROTATION_OFFSET[i][0]] ||
+            y + ROTATION_OFFSET[i][1] >= height[x + ROTATION_OFFSET[i][0]]) {
+            continue;
+        }
+
+        if (this->puyo[static_cast<int>(puyo)].column[x + ROTATION_OFFSET[i][0]] & (1 << (y + ROTATION_OFFSET[i][1]))) {
+            this->flood_fill_count(height, visit, x + ROTATION_OFFSET[i][0], y + ROTATION_OFFSET[i][1], puyo, count);
+        }
+    }
+};
+
 void Field::drop_puyo(int x, Puyo puyo)
 {
     assert(x >= 0 && x < 6);

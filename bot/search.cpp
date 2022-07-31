@@ -31,6 +31,8 @@ void Search::search(Field field, std::vector<Pair> queue, SearchResult& result, 
         candidate.node.field.drop_pair(placement[i].x, placement[i].rotation, queue[0]);
         candidate.node.field.pop(chain);
 
+        candidate.score.all_clear = candidate.score.all_clear || (candidate.node.field.popcount() == 0);
+
         if (chain.count <= max_harass) {
             evaluator.evaluate(candidate.node, node, placement[i], queue[0]);
             ttable.add_entry(ttable.hash(candidate.node.field), 0);
@@ -78,6 +80,8 @@ SearchScore Search::nsearch(Node& node, std::vector<Pair>& queue, Evaluator& eva
             continue;
         }
 
+        score.all_clear = score.all_clear || (child.field.popcount() == 0);
+
         if (chain.count <= max_harass) {
             evaluator.evaluate(child, node, placement[i], queue[depth]);
             if (ttable.add_entry(ttable.hash(child.field), depth)) {
@@ -85,9 +89,13 @@ SearchScore Search::nsearch(Node& node, std::vector<Pair>& queue, Evaluator& eva
                     children.add(child);
                 }
                 else {
+                    // DetectorScore detect_score = Detector::detect(node.field);
+                    // score.chain_score = std::max(score.chain_score, detect_score.chain_score);
+                    // score.chain_count = std::max(score.chain_count, detect_score.chain_count);
+                    // score.eval = std::max(score.eval, child.score.accumulate + child.score.evaluation);
                     SearchScore qscore = Search::qsearch(child, node_count);
-                    score.chain_score = std::max(score.chain_score, qscore.chain_score);
                     score.chain_count = std::max(score.chain_count, qscore.chain_count);
+                    score.chain_score = std::max(score.chain_score, qscore.chain_score);
                     score.eval = std::max(score.eval, child.score.accumulate + child.score.evaluation);
                 }
             }
@@ -111,9 +119,10 @@ SearchScore Search::nsearch(Node& node, std::vector<Pair>& queue, Evaluator& eva
 
     for (int i = 0; i < children.get_size(); ++i) {
         SearchScore nscore = Search::nsearch(children[i], queue, evaluator, ttable, max_harass, depth + 1, node_count);
-        score.chain_score = std::max(score.chain_score, nscore.chain_score);
         score.chain_count = std::max(score.chain_count, nscore.chain_count);
+        score.chain_score = std::max(score.chain_score, nscore.chain_score);
         score.eval = std::max(score.eval, nscore.eval);
+        score.all_clear = score.all_clear || nscore.all_clear;
     }
 
     return score;
@@ -147,8 +156,8 @@ SearchScore Search::qsearch(Node& node, int& node_count)
             }
 
             if (chain.count > 0) {
-                score.chain_score = std::max(score.chain_score, Field::calculate_point(chain));
                 score.chain_count = std::max(score.chain_count, chain.count);
+                score.chain_score = std::max(score.chain_score, Field::calculate_point(chain));
             }
         }
     }

@@ -5,14 +5,14 @@
 
 struct HeuristicAccumulate
 {
-    int connection = 0;
-    int connection_horizontal = 0;
-    int connection_vertical_side = 0;
+    int link = 0;
+    int link_hor_bottom = 0;
+    int link_ver_side = 0;
 };
 
 struct HeuristicEvaluation
 {
-    int height_third_column = 0;
+    int height_col_3 = 0;
     int well = 0;
     int well_sq = 0;
     int bump = 0;
@@ -34,8 +34,10 @@ public:
     Heuristic heuristic;
 public:
     void evaluate(Node& node, Node& parent, Placement placement, Pair pair);
+    void evaluate_evaluation(Node& node);
+    void evaluate_accumulate(Node& node, Node& parent, Placement placement, Pair pair);
 public:
-    static void connection(Field previous, Placement placement, Pair pair, int result[3]);
+    static void link(Field& field, int height[6], int x, Puyo puyo, int result[3]);
 public:
     static void well(int height[6], int result[2]);
     static void bump(int height[6], int result[2]);
@@ -46,11 +48,11 @@ constexpr Heuristic DEFAULT_HEURISTIC()
 {
     Heuristic result;
 
-    result.accumulate.connection = 251;
-    result.accumulate.connection_horizontal = 0;
-    result.accumulate.connection_vertical_side = 237;
+    result.accumulate.link = 251;
+    result.accumulate.link_hor_bottom = 0;
+    result.accumulate.link_ver_side = 237;
     
-    result.evaluation.height_third_column = -81;
+    result.evaluation.height_col_3 = -81;
     result.evaluation.well = -65;
     result.evaluation.well_sq = -7;
     result.evaluation.bump = -13;

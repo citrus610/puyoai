@@ -2,12 +2,14 @@
 
 #include "eval.h"
 #include "ttable.h"
+#include "detect.h"
 
 struct SearchScore
 {
     int eval = INT_MIN;
     int chain_count = 0;
     int chain_score = 0;
+    bool all_clear = false;
 };
 
 struct SearchCandidate

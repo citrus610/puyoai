@@ -95,21 +95,21 @@ void render_queue(std::pair<Puyo, Puyo> p1, std::pair<Puyo, Puyo> p2)
 {
     using namespace std;
 
-    draw_rectangle(8, 0, 3, 7, PIXEL_SOLID, COLOR_FG_WHITE);
-    draw_rectangle(9, 1, 1, 2, PIXEL_SOLID, COLOR_FG_BLACK);
-    draw_rectangle(9, 4, 1, 2, PIXEL_SOLID, COLOR_FG_BLACK);
+    draw_rectangle(7, 0, 3, 7, PIXEL_SOLID, COLOR_FG_WHITE);
+    draw_rectangle(8, 1, 1, 2, PIXEL_SOLID, COLOR_FG_BLACK);
+    draw_rectangle(8, 4, 1, 2, PIXEL_SOLID, COLOR_FG_BLACK);
 
     Color color;
 
     color = pchar_to_color(convert_puyo_char(p1.first));
-    draw(9, 1, PIXEL_CIRCLE, color);
+    draw(8, 1, PIXEL_CIRCLE, color);
     color = pchar_to_color(convert_puyo_char(p1.second));
-    draw(9, 2, PIXEL_CIRCLE, color);
+    draw(8, 2, PIXEL_CIRCLE, color);
 
     color = pchar_to_color(convert_puyo_char(p2.first));
-    draw(9, 4, PIXEL_CIRCLE, color);
+    draw(8, 4, PIXEL_CIRCLE, color);
     color = pchar_to_color(convert_puyo_char(p2.second));
-    draw(9, 5, PIXEL_CIRCLE, color);
+    draw(8, 5, PIXEL_CIRCLE, color);
 };
 
 void load_json_heuristic(Heuristic& h)
@@ -141,7 +141,7 @@ int main()
 {
     using namespace std;
 
-    create_window(16, 18, 50);
+    create_window(10, 18, 50);
 
     srand(uint32_t(time(NULL)));
 
@@ -155,7 +155,25 @@ int main()
 
     vector<Pair> queue = create_queue();
 
+    // const char c[13][7] = {
+    //     "......",
+    //     "......",
+    //     "......",
+    //     "......",
+    //     "......",
+    //     "......",
+    //     "......",
+    //     ".....G",
+    //     "R....G",
+    //     "BBBGGR",
+    //     "RGYBBR",
+    //     "RRGYYB",
+    //     "GGYRRB",
+    // };
+
     Field field;
+    // field.from(c);
+
     render_field(field);
     this_thread::sleep_for(chrono::milliseconds(time_wait));
 
@@ -219,7 +237,7 @@ int main()
 
         while (pop_mask.popcount() > 0)
         {
-            draw_text(9, 8, std::to_wstring(chain), COLOR_FG_WHITE);
+            draw_text(8, 8, std::to_wstring(chain), COLOR_FG_WHITE);
             render_field(field, pop_mask);
             render_queue(tqueue[1], tqueue[2]);
             render();
@@ -232,7 +250,7 @@ int main()
                 }
             }
 
-            draw_text(9, 8, std::to_wstring(chain), COLOR_FG_WHITE);
+            draw_text(8, 8, std::to_wstring(chain), COLOR_FG_WHITE);
             render_field(field);
             render_queue(tqueue[1], tqueue[2]);
             render();
