@@ -28,9 +28,9 @@ DetectorScore Detector::detect(Field& field)
     // For every x position from min_x to max_y
     for (int x = min_x; x <= max_x; ++x) {
         // If there is a well at column x, then ignore
-        if ((x == 0 && height[0] < height[1]) ||
-            (x == 5 && height[5] < height[4]) ||
-            (height[x] < height[x - 1] && height[x] < height[x + 1])) {
+        if ((x == 0 && height[0] < height[1] - 1) ||
+            (x == 5 && height[5] < height[4] - 1) ||
+            (height[x] < height[x - 1] - 1 && height[x] < height[x + 1] - 1)) {
             continue;
         }
 
@@ -49,8 +49,7 @@ DetectorScore Detector::detect(Field& field)
 
                 Chain chain;
                 field_copy.pop(chain);
-                result.chain_count = std::max(result.chain_count, chain.count);
-                result.chain_score = std::max(result.chain_score, Field::calculate_point(chain));
+                result = std::max(result, DetectorScore { .chain_count = chain.count, .puyo_add_count = i + 1 });
                 break;
             }
         }

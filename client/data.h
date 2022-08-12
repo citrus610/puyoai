@@ -17,14 +17,14 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(HeuristicAccumulate,
 )
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(HeuristicEvaluation,
-    height_col_3,
     well,
     well_sq,
     bump,
     bump_sq,
+    symm,
+    symm_sq,
     shape_u,
-    shape_u_sq,
-    side_bias
+    shape_u_sq
 )
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Heuristic, accumulate, evaluation)

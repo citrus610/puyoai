@@ -156,23 +156,23 @@ int main()
     vector<Pair> queue = create_queue();
 
     // const char c[13][7] = {
-    //     "......",
-    //     "......",
-    //     "......",
-    //     "......",
-    //     "......",
-    //     "......",
-    //     "......",
-    //     ".....G",
-    //     "R....G",
-    //     "BBBGGR",
-    //     "RGYBBR",
-    //     "RRGYYB",
-    //     "GGYRRB",
-    // };
+    //    "......",
+    //    "......",
+    //    "......",
+    //    "......",
+    //    "......",
+    //    "......",
+    //    "......",
+    //    ".....G",
+    //    "R....G",
+    //    "BBBGGR",
+    //    "RGYBBR",
+    //    "RRGYYB",
+    //    "GGYRRB",
+    //};
 
     Field field;
-    // field.from(c);
+    //field.from(c);
 
     render_field(field);
     this_thread::sleep_for(chrono::milliseconds(time_wait));
@@ -180,6 +180,10 @@ int main()
     int i = 0;
     while (true) 
     {
+        if (field.get_height(2) > 11) {
+            return -1;
+        }
+
         vector<Pair> tqueue;
         tqueue.push_back(queue[(i + 0) % 128]);
         tqueue.push_back(queue[(i + 1) % 128]);
@@ -187,37 +191,13 @@ int main()
 
         ++i;
 
-        // SearchInfo sinfo;
-
-        // auto time_1 = chrono::high_resolution_clock::now();
-        // Search::search(field, tqueue, sinfo, 18, 0, heuristic);
-        // auto time_2 = chrono::high_resolution_clock::now();
-
-        // int64_t time = chrono::duration_cast<chrono::microseconds>(time_2 - time_1).count();
-
-        // draw_text(0, 14, std::wstring(L"node: ") + std::to_wstring(sinfo.node), COLOR_FG_WHITE);
-        // draw_text(0, 15, std::wstring(L"time: ") + std::to_wstring(int(std::round(double(time) / 1000.0))) + std::wstring(L" ms"), COLOR_FG_WHITE);
-        // if (time == 0) {
-        //     draw_text(0, 16, std::wstring(L"nps:  ") + std::wstring(L"NULL") + std::wstring(L" kn/s"), COLOR_FG_WHITE);
-        // }
-        // else {
-        //     draw_text(0, 16, std::wstring(L"nps:  ") + std::to_wstring(int(std::round(double(sinfo.node) / double(time) * 1000.0))) + std::wstring(L" kn/s"), COLOR_FG_WHITE);
-        // }
-
-        // if (sinfo.node == 0) {
-        //     return -1;
-        // }
-
-        // SearchCandidate scan;
-        // Decision::decide(field, sinfo, scan);
-
-        // draw_text(0, 17, std::wstring(L"chain: ") + std::to_wstring(scan.nscore.chain), COLOR_FG_WHITE);
+        auto time_1 = chrono::high_resolution_clock::now();
 
         AiResult airesult = Ai::think_mono(field, tqueue, 32, 2, heuristic);
 
-        if (airesult.node == 0) {
-            return -1;
-        }
+        auto time_2 = chrono::high_resolution_clock::now();
+        int64_t time = chrono::duration_cast<chrono::microseconds>(time_2 - time_1).count();
+        draw_text(0, 15, std::wstring(L"time: ") + std::to_wstring(int(std::round(double(time) / 1000.0))) + std::wstring(L" ms"), COLOR_FG_WHITE);
 
         Puyo pair[2] = { tqueue[0].first, tqueue[0].second };
 

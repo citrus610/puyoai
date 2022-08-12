@@ -7,7 +7,6 @@ struct AiResult
 {
     Placement placement;
     MoveQueue move;
-    int node = 0;
 };
 
 struct AiAttackCandidate

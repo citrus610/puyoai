@@ -33,7 +33,7 @@ AiResult Ai::think_mono(Field& field, std::vector<Pair>& queue, int harass_trigg
     SearchResult search_result;
     Search::search(field, queue, search_result, harass_max, heuristic);
     if (search_result.candidate.get_size() == 0 && search_result.candidate_attack.get_size() == 0) {
-        return { Placement { .x = 2, .rotation = Rotation::UP }, MoveQueue(), 0 };
+        return { Placement { .x = 2, .rotation = Rotation::UP }, MoveQueue() };
     }
 
     // Classify type of candidate
@@ -43,10 +43,10 @@ AiResult Ai::think_mono(Field& field, std::vector<Pair>& queue, int harass_trigg
             search_result.candidate.iter_begin(),
             search_result.candidate.iter_end(),
             [&] (const SearchCandidate& a, const SearchCandidate& b) {
-                if (b.score.chain_count == a.score.chain_count) {
+                if (b.score.dect == a.score.dect) {
                     return b.score.eval < a.score.eval;
                 }
-                return b.score.chain_count < a.score.chain_count;
+                return b.score.dect < a.score.dect;
             }
         );
     }
@@ -57,26 +57,29 @@ AiResult Ai::think_mono(Field& field, std::vector<Pair>& queue, int harass_trigg
             search_result.candidate_attack.iter_begin(),
             search_result.candidate_attack.iter_end(),
             [&] (const SearchCandidate& a, const SearchCandidate& b) {
-                if (b.score.chain_count == a.score.chain_count) {
+                if (b.score.dect.chain_count == a.score.dect.chain_count) {
                     return b.score.chain_score < a.score.chain_score;
                 }
-                return b.score.chain_count < a.score.chain_count;
+                return b.score.dect.chain_count < a.score.dect.chain_count;
             }
         );
     }
 
     // Go to all clear
+#ifdef MAKE_TUNER
+#else
     for (int i = 0; i < search_result.candidate_attack.get_size(); ++i) {
         if (search_result.candidate_attack[i].score.all_clear) {
-            return { search_result.candidate_attack[i].placement, MoveQueue(), search_result.node };
+            return { search_result.candidate_attack[i].placement, MoveQueue() };
         }
     }
 
     for (int i = 0; i < search_result.candidate.get_size(); ++i) {
         if (search_result.candidate[i].score.all_clear) {
-            return { search_result.candidate[i].placement, MoveQueue(), search_result.node };
+            return { search_result.candidate[i].placement, MoveQueue() };
         }
     }
+#endif
 
     // Take action: build chain or execute chain
     int max_chain_point = 0;
@@ -93,82 +96,81 @@ AiResult Ai::think_mono(Field& field, std::vector<Pair>& queue, int harass_trigg
         if (search_result.candidate.get_size() > 0) {
             best_candidate = search_result.candidate[0];
         }
-        if (search_result.candidate_attack.get_size() > 0 && search_result.candidate_attack[0].score.chain_count > best_candidate.score.chain_count) {
+        if (search_result.candidate_attack.get_size() > 0 &&
+            (best_candidate.score.dect.chain_count < search_result.candidate_attack[0].score.dect.chain_count ||
+            best_candidate.score.dect.chain_count == search_result.candidate_attack[0].score.dect.chain_count)) {
             best_candidate = search_result.candidate_attack[0];
         }
 
-        return { best_candidate.placement, MoveQueue(), search_result.node };
+        return { best_candidate.placement, MoveQueue() };
     }
 
     // Else continue building chain
     if (search_result.candidate.get_size() > 0) {
-        return { search_result.candidate[0].placement, MoveQueue(), search_result.node };
+        return { search_result.candidate[0].placement, MoveQueue() };
     }
     
-    return { search_result.candidate_attack[0].placement, MoveQueue(), search_result.node };
+    return { search_result.candidate_attack[0].placement, MoveQueue() };
 };
 
 AiResult Ai::think_pvp(Field& field, std::vector<Pair>& queue, int incomming_attack, int target_point, int bonus_point, bool pc, bool enemy_danger, Heuristic heuristic)
 {
     avec<AiAttackCandidate, 22> attack_candidate = Ai::get_attack_candidate(field, queue[0], target_point, bonus_point, pc);
 
+    // If there is incomming attack
     if (incomming_attack > 0) {
-        if (attack_candidate.get_size() > 0) {
+        avec<AiAttackCandidate, 22> return_attack_candidate = avec<AiAttackCandidate, 22>();
+
+        for (int i = 0; i < attack_candidate.get_size(); ++i) {
+            if (attack_candidate[i].chain_attack >= incomming_attack) {
+                return_attack_candidate.add(attack_candidate[i]);
+            }
+        }
+
+        if (return_attack_candidate.get_size() > 0) {
             std::sort
             (
-                attack_candidate.iter_begin(),
-                attack_candidate.iter_end(),
+                return_attack_candidate.iter_begin(),
+                return_attack_candidate.iter_end(),
                 [&] (const AiAttackCandidate& a, const AiAttackCandidate& b) {
-                    return b.chain_attack < a.chain_attack;
+                    if (a.chain_count == b.chain_count) {
+                        return b.chain_attack < a.chain_attack;
+                    }
+                    return a.chain_count < b.chain_count;
                 }
             );
         }
 
-        if (attack_candidate.get_size() == 0 || attack_candidate[0].chain_attack < incomming_attack) {
-            return Ai::think_mono(field, queue, 32, 2, heuristic);
+        if (return_attack_candidate.get_size() == 0) {
+            return Ai::think_mono(field, queue, 18, 2, heuristic);
         }
 
-        AiAttackCandidate offset_candidate;
-        int min_chain_count = INT_MAX;
-        for (int i = 0; i < attack_candidate.get_size(); ++i) {
-            if (attack_candidate[i].chain_attack >= incomming_attack) {
-                if (attack_candidate[i].chain_count < min_chain_count) {
-                    offset_candidate = attack_candidate[i];
-                    min_chain_count = attack_candidate[i].chain_count;
-                }
-            }
-            else {
-                break;
-            }
-        }
-
-        return { .placement = offset_candidate.placement, .move = MoveQueue(), .node = 0 };
+        return { .placement = return_attack_candidate[0].placement, .move = MoveQueue() };
     }
 
     if (enemy_danger && attack_candidate.get_size() > 0) {
-        std::sort
-        (
-            attack_candidate.iter_begin(),
-            attack_candidate.iter_end(),
-            [&] (const AiAttackCandidate& a, const AiAttackCandidate& b) {
-                return b.chain_attack < a.chain_attack;
+        avec<AiAttackCandidate, 22> quick_kill_candidate = avec<AiAttackCandidate, 22>();
+
+        for (int i = 0; i < attack_candidate.get_size(); ++i) {
+            if (attack_candidate[i].chain_count < 5 && attack_candidate[i].chain_attack >= 12) {
+                quick_kill_candidate.add(attack_candidate[i]);
             }
-        );
+        }
 
-        const int quick_kill_attack_min = 6;
-
-        if (attack_candidate[0].chain_attack >= quick_kill_attack_min) {
-            AiAttackCandidate quick_kill_candidate;
-            for (int i = 0; i < attack_candidate.get_size(); ++i) {
-                if (attack_candidate[i].chain_attack >= quick_kill_attack_min) {
-                    quick_kill_candidate = attack_candidate[i];
+        if (quick_kill_candidate.get_size() > 0) {
+            std::sort
+            (
+                quick_kill_candidate.iter_begin(),
+                quick_kill_candidate.iter_end(),
+                [&] (const AiAttackCandidate& a, const AiAttackCandidate& b) {
+                    if (a.chain_count == b.chain_count) {
+                        return b.chain_attack < a.chain_attack;
+                    }
+                    return a.chain_count < b.chain_count;
                 }
-                else {
-                    break;
-                }
-            }
+            );
 
-            return { .placement = quick_kill_candidate.placement, .move = MoveQueue(), .node = 0 };
+            return { .placement = quick_kill_candidate[0].placement, .move = MoveQueue() };
         }
     }
 
@@ -201,6 +203,7 @@ avec<AiAttackCandidate, 22> Ai::get_attack_candidate(Field& field, Pair pair, in
 
 bool Ai::get_enemy_danger(Field& field_enemy, std::vector<Pair>& queue_enemy)
 {
+    // Enemy has no attack
     bool enemy_has_no_attack = true;
 
     for (auto pair : queue_enemy) {
@@ -211,7 +214,8 @@ bool Ai::get_enemy_danger(Field& field_enemy, std::vector<Pair>& queue_enemy)
         }
     }
 
-    int field_enemy_popcnt = field_enemy.popcount();
+    // Enemy high risk
+    bool enemy_high = field_enemy.puyo[static_cast<int>(Puyo::GARBAGE)].popcount() > (field_enemy.popcount() / 2);
 
-    return enemy_has_no_attack && (13 * 6 - field_enemy_popcnt < 18);
+    return enemy_has_no_attack && enemy_high;
 };

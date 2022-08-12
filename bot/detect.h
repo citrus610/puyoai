@@ -1,19 +1,28 @@
 #pragma once
 
-// Not use right now
-
 #include "../core/field.h"
 
 struct DetectorScore
 {
     int chain_count = 0;
-    int chain_score = 0;
+    int puyo_add_count = 0;
 };
 
 class Detector
 {
 public:
     static DetectorScore detect(Field& field);
+};
+
+static inline bool operator < (const DetectorScore& a, const DetectorScore& b) {
+    if (a.chain_count == b.chain_count) {
+        return b.puyo_add_count < a.puyo_add_count;
+    }
+    return a.chain_count < b.chain_count;
+};
+
+static inline bool operator == (const DetectorScore& a, const DetectorScore& b) {
+    return a.chain_count == b.chain_count && a.puyo_add_count == b.puyo_add_count;
 };
 
 static void bench_detect()

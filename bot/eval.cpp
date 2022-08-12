@@ -2,18 +2,16 @@
 
 void Evaluator::evaluate(Node& node, Node& parent, Placement placement, Pair pair)
 {
-    Evaluator::evaluate_evaluation(node);
-    Evaluator::evaluate_accumulate(node, parent, placement, pair);
+    this->evaluate_evaluation(node);
+    this->evaluate_accumulate(node, parent, placement, pair);
 };
 
 void Evaluator::evaluate_evaluation(Node& node)
 {
-    node.score.evaluation = 0;
+    node.score.eval.evaluation = 0;
 
     int height[6];
     node.field.get_height(height);
-
-    node.score.evaluation += height[2] * this->heuristic.evaluation.height_col_3;
 
     int height_min = height[0];
     int height_max = height[0];
@@ -28,21 +26,23 @@ void Evaluator::evaluate_evaluation(Node& node)
 
     int well[2];
     Evaluator::well(height, well);
-    node.score.evaluation += well[0] * this->heuristic.evaluation.well;
-    node.score.evaluation += well[1] * this->heuristic.evaluation.well_sq;
+    node.score.eval.evaluation += well[0] * this->heuristic.evaluation.well;
+    node.score.eval.evaluation += well[1] * this->heuristic.evaluation.well_sq;
 
     int bump[2];
     Evaluator::bump(height, bump);
-    node.score.evaluation += bump[0] * this->heuristic.evaluation.bump;
-    node.score.evaluation += bump[1] * this->heuristic.evaluation.bump_sq;
+    node.score.eval.evaluation += bump[0] * this->heuristic.evaluation.bump;
+    node.score.eval.evaluation += bump[1] * this->heuristic.evaluation.bump_sq;
+
+    int symm[2];
+    Evaluator::symm(height, symm);
+    node.score.eval.evaluation += symm[0] * this->heuristic.evaluation.symm;
+    node.score.eval.evaluation += symm[1] * this->heuristic.evaluation.symm_sq;
 
     int shape_u[2];
     Evaluator::shape_u(height, shape_u);
-    node.score.evaluation += shape_u[0] * this->heuristic.evaluation.shape_u;
-    node.score.evaluation += shape_u[1] * this->heuristic.evaluation.shape_u_sq;
-
-    int side_bias = std::abs(height[0] + height[1] + height[2] - height[3] - height[4] - height[5]);
-    node.score.evaluation += side_bias * this->heuristic.evaluation.side_bias;
+    node.score.eval.evaluation += shape_u[0] * this->heuristic.evaluation.shape_u;
+    node.score.eval.evaluation += shape_u[1] * this->heuristic.evaluation.shape_u_sq;
 };
 
 void Evaluator::evaluate_accumulate(Node& node, Node& parent, Placement placement, Pair pair)
@@ -62,9 +62,9 @@ void Evaluator::evaluate_accumulate(Node& node, Node& parent, Placement placemen
     // Link count
     int link[3] = { 0, 0, 0 };
     Evaluator::link(previous_field, height, placement.x, puyo[0], link);
-    node.score.accumulate += link[0] * this->heuristic.accumulate.link;
-    node.score.accumulate += link[1] * this->heuristic.accumulate.link_hor_bottom;
-    node.score.accumulate += link[2] * this->heuristic.accumulate.link_ver_side;
+    node.score.eval.accumulate += link[0] * this->heuristic.accumulate.link;
+    node.score.eval.accumulate += link[1] * this->heuristic.accumulate.link_hor_bottom;
+    node.score.eval.accumulate += link[2] * this->heuristic.accumulate.link_ver_side;
 
     // Place 2nd puyo
     previous_field.set_puyo(placement.x, height[placement.x], puyo[0]);
@@ -79,13 +79,10 @@ void Evaluator::evaluate_accumulate(Node& node, Node& parent, Placement placemen
     }
 
     // Link count
-    link[0] = 0;
-    link[1] = 0;
-    link[2] = 0;
     Evaluator::link(previous_field, height, second_puyo_x, puyo[1], link);
-    node.score.accumulate += link[0] * this->heuristic.accumulate.link;
-    node.score.accumulate += link[1] * this->heuristic.accumulate.link_hor_bottom;
-    node.score.accumulate += link[2] * this->heuristic.accumulate.link_ver_side;
+    node.score.eval.accumulate += link[0] * this->heuristic.accumulate.link;
+    node.score.eval.accumulate += link[1] * this->heuristic.accumulate.link_hor_bottom;
+    node.score.eval.accumulate += link[2] * this->heuristic.accumulate.link_ver_side;
 };
 
 void Evaluator::well(int height[6], int result[2])
@@ -118,6 +115,18 @@ void Evaluator::bump(int height[6], int result[2])
     }
 };
 
+void Evaluator::symm(int height[6], int result[2])
+{
+    int value[3] = {
+        std::abs(height[0] - height[5]),
+        std::abs(height[1] - height[4]),
+        std::abs(height[2] - height[3])
+    };
+
+    result[0] = value[0] + value[1] + value[2];
+    result[1] = value[0] * value[0] + value[1] * value[1] + value[2] * value[2];
+};
+
 void Evaluator::shape_u(int height[6], int result[2])
 {
     result[0] = 0;
@@ -142,10 +151,14 @@ void Evaluator::shape_u(int height[6], int result[2])
 
 void Evaluator::link(Field& field, int height[6], int x, Puyo puyo, int result[3])
 {
+    result[0] = 0;
+    result[1] = 0;
+    result[2] = 0;
+
     // Normal limk count
     result[0] += field.get_puyo(x - 1, height[x]) == puyo;
     result[0] += field.get_puyo(x + 1, height[x]) == puyo;
-    result[0] += field.get_puyo(x, height[x] - 1) == puyo;
+    result[0] += field.get_puyo(x, height[x] - 1) == puyo && (height[x] & 3);
 
     // Link count horizontal under height of 3 - link bottom
     result[1] += field.get_puyo(x - 1, height[x]) == puyo && height[x] < 4;
