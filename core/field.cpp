@@ -243,6 +243,25 @@ void Field::poppable_mask(FieldMono& mask, int& color)
     }
 };
 
+// Find out if the recent puyo pair drop trigger a chain
+bool Field::poppable_drop(int x, Rotation rotation, Pair pair)
+{
+    int x1 = x;
+    int y1 = this->get_height(x) - 1;
+    int x2, y2;
+
+    if (rotation == Rotation::UP || rotation == Rotation::DOWN) {
+        x2 = x1;
+        y2 = y1 - 1;
+    }
+    else {
+        x2 = x1 + ROTATION_OFFSET[static_cast<uint8_t>(rotation)][0];
+        y2 = this->get_height(x2) - 1;
+    }
+
+    return this->count_group(x1, y1) > 3 || this->count_group(x2, y2) > 3;
+};
+
 // Trigger chain if possible
 void Field::pop(Chain& chain)
 {

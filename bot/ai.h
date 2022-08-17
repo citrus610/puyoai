@@ -25,4 +25,6 @@ public:
 public:
     static avec<AiAttackCandidate, 22> get_attack_candidate(Field& field, Pair pair, int target_point, int bonus_point, bool pc);
     static bool get_enemy_danger(Field& field_enemy, std::vector<Pair>& queue_enemy);
+    static int get_above_stack_count(Field& field);
+    static int flood_fill_above_stack_count(Field& field, int x, int y, bool visit[12][6]);
 };

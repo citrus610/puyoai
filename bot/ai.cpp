@@ -215,7 +215,40 @@ bool Ai::get_enemy_danger(Field& field_enemy, std::vector<Pair>& queue_enemy)
     }
 
     // Enemy high risk
-    bool enemy_high = field_enemy.puyo[static_cast<int>(Puyo::GARBAGE)].popcount() > (field_enemy.popcount() / 2);
+    bool enemy_high = field_enemy.puyo[static_cast<int>(Puyo::GARBAGE)].popcount() >= (field_enemy.popcount() / 2);
 
-    return enemy_has_no_attack && enemy_high;
+    bool enemy_garbage_obstructed = Ai::get_above_stack_count(field_enemy) <= (field_enemy.popcount() / 2);
+
+    return enemy_has_no_attack && (enemy_high || enemy_garbage_obstructed);
+};
+
+int Ai::get_above_stack_count(Field& field)
+{
+    bool visit[12][6] = { false };
+    return Ai::flood_fill_above_stack_count(field, 2, 11, visit);
+};
+
+int Ai::flood_fill_above_stack_count(Field& field, int x, int y, bool visit[12][6])
+{
+    int result = field.get_puyo(x, y) != Puyo::NONE;
+
+    visit[y][x] = true;
+
+    for (int i = 0; i < 4; ++i) {
+        int offset_x = ROTATION_OFFSET[i][0];
+        int offset_y = ROTATION_OFFSET[i][1];
+
+        if (x + offset_x < 0 ||
+            x + offset_x > 5 ||
+            y + offset_y < 0 ||
+            y + offset_y > 11 ||
+            visit[y + offset_y][x + offset_x] ||
+            field.get_puyo(x + offset_x, y + offset_y) == Puyo::GARBAGE) {
+            continue;
+        }
+
+        result += Ai::flood_fill_above_stack_count(field, x + offset_x, y + offset_y, visit);
+    }
+
+    return result;
 };

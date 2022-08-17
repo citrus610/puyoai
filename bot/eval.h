@@ -49,18 +49,18 @@ constexpr Heuristic DEFAULT_HEURISTIC()
 {
     Heuristic result;
 
-    result.accumulate.link = 88;
-    result.accumulate.link_hor_bottom = 393;
-    result.accumulate.link_ver_side = -141;
+    result.accumulate.link = 100;
+    result.accumulate.link_hor_bottom = 100;
+    result.accumulate.link_ver_side = 100;
     
-    result.evaluation.well = -381;
-    result.evaluation.well_sq = 39;
-    result.evaluation.bump = 991;
-    result.evaluation.bump_sq = -695;
-    result.evaluation.shape_u = -665;
-    result.evaluation.shape_u_sq = -856;
-    result.evaluation.symm = 403;
-    result.evaluation.symm_sq = -377;
+    result.evaluation.well = -50;
+    result.evaluation.well_sq = -50;
+    result.evaluation.bump = 80;
+    result.evaluation.bump_sq = -35;
+    result.evaluation.shape_u = -200;
+    result.evaluation.shape_u_sq = -150;
+    result.evaluation.symm = -50;
+    result.evaluation.symm_sq = -100;
 
     return result;
 };

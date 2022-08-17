@@ -47,6 +47,7 @@ public:
     void drop_pair(int x, Rotation rotation, Pair pair);
 public:
     void poppable_mask(FieldMono& mask, int& color);
+    bool poppable_drop(int x, Rotation rotation, Pair pair);
     void pop(Chain& chain);
 public:
     static int calculate_point(Chain& chain);

@@ -73,7 +73,10 @@ SearchScore Search::nsearch(Node& node, std::vector<Pair>& queue, Evaluator& eva
         Node child = node;
         Chain chain = Chain();
         child.field.drop_pair(placement[i].x, placement[i].rotation, queue[depth]);
-        child.field.pop(chain);
+
+        if (child.field.poppable_drop(placement[i].x, placement[i].rotation, queue[depth])) {
+            child.field.pop(chain);
+        }
 
         if (child.field.get_height(2) > 11) {
             continue;
@@ -85,12 +88,12 @@ SearchScore Search::nsearch(Node& node, std::vector<Pair>& queue, Evaluator& eva
             if (ttable.add_entry(ttable.hash(child.field), depth)) {
                 evaluator.evaluate(child, node, placement[i], queue[depth]);
                 child.score.dect = Detector::detect(child.field);
-                score.dect = std::max(score.dect, child.score.dect);
                 
                 if (depth + 1 < queue.size()) {
                     children.add(child);
                 }
                 else {
+                    score.dect = std::max(score.dect, child.score.dect);
                     score.eval = std::max(score.eval, child.score.eval.accumulate + child.score.eval.evaluation);
                 }
             }
@@ -101,7 +104,33 @@ SearchScore Search::nsearch(Node& node, std::vector<Pair>& queue, Evaluator& eva
         }
     }
 
+    // if (children.get_size() > 0) {
+    //     std::sort
+    //     (
+    //         children.iter_begin(),
+    //         children.iter_end(),
+    //         [&] (const Node& a, const Node& b) {
+    //             return b < a;
+    //         }
+    //     );
+    // }
+
     if (children.get_size() > 0) {
+        std::sort
+        (
+            children.iter_begin(),
+            children.iter_end(),
+            [&] (const Node& a, const Node& b) {
+                return b.score.eval < a.score.eval;
+            }
+        );
+
+        int prune = children.get_size() * 2 / 10;
+
+        for (int i = 0; i < prune; ++i) {
+            children.pop();
+        }
+
         std::sort
         (
             children.iter_begin(),
