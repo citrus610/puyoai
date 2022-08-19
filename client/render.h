@@ -98,7 +98,7 @@ static void create_window(int w, int h, int pixel_size)
         return;
     }
 
-    window_rectangle = { 0, 0, 1, 1 };
+    window_rectangle = { 0, 0, (short)w, (short)h };
     SetConsoleWindowInfo(console_handle, TRUE, &window_rectangle);
 
     COORD coord = { (short)width, (short)height };
