@@ -17,13 +17,13 @@ STATIC_LIB = -luser32 -lgdi32 -lopengl32 -lgdiplus -lShlwapi -ldwmapi -lstdc++fs
 all: client tuner
 
 client: makedir
-	@echo Building Lemon Tea client...
-	@$(CXX) $(CXXFLAGS) "bot\*.cpp" "client\*.cpp" $(STATIC_LIB) -o "bin\client\client.exe"
-	@echo Finished building Lemon Tea client!
+	@echo Building client...
+	@$(CXX) $(CXXFLAGS) "core\*.cpp" "bot\*.cpp" "client\*.cpp" $(STATIC_LIB) -o "bin\client\client.exe"
+	@echo Finished building client!
 
 tuner: makedir
 	@echo Building tuner...
-	@$(CXX) $(CXXFLAGS) "bot\*.cpp" "tuner\*.cpp" $(STATIC_LIB) -o "bin\tuner\tuner.exe"
+	@$(CXX) $(CXXFLAGS) -DMAKE_TUNER "core\*.cpp" "bot\*.cpp" "tuner\*.cpp" $(STATIC_LIB) -o "bin\tuner\tuner.exe"
 	@echo Finished building tuner!
 
 clean: makedir
