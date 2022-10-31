@@ -177,12 +177,12 @@ int main()
        "......",
        "......",
        "......",
-       ".....G",
-       "R....G",
-       "BBBGGR",
-       "RGYBBR",
-       "RRGYYB",
-       "GGYRRB",
+       "......",
+       "R.....",
+       "BB..G.",
+       "RG.GYG",
+       "RRBYBY",
+       "GGGBBY",
     };
 
     Field field;
@@ -207,7 +207,7 @@ int main()
 
         auto time_1 = chrono::high_resolution_clock::now();
 
-        AI::Result ai_result = AI::think_1p(field, tqueue, 32, 1000, heuristic);
+        AI::Result ai_result = AI::think_1p(field, tqueue, 32, 360, heuristic);
 
         auto time_2 = chrono::high_resolution_clock::now();
         int64_t time = chrono::duration_cast<chrono::microseconds>(time_2 - time_1).count();

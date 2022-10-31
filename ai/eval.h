@@ -31,8 +31,8 @@ public:
 };
 
 constexpr Weight DEFAULT_WEIGHT = {
-    .link_ver = 15,
-    .link_hor = 15,
+    .link_ver = 25,
+    .link_hor = 25,
     .d_height = -5,
     .d_height_sq = -1,
     .symm = -5,
@@ -40,7 +40,7 @@ constexpr Weight DEFAULT_WEIGHT = {
     .shape_u = -10,
     .shape_u_sq = -10,
 
-    .ptnl_chain_count = 75,
+    .ptnl_chain_count = 85,
     .ptnl_chain_score = 1,
     .ptnl_chain_added = -100,
     .ptnl_chain_height = 100,
