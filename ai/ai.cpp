@@ -68,7 +68,7 @@ namespace AI
             }
 
             if (candidate_attack.empty()) {
-                if (enemy.incomming_attack_frame <= 4 && !candidate_attack_all.empty()) {
+                if ((enemy.incomming_attack_frame <= 4) && (!candidate_attack_all.empty())) {
                     std::sort(
                         candidate_attack_all.begin(),
                         candidate_attack_all.end(),
@@ -91,7 +91,13 @@ namespace AI
                     candidate_attack.end(),
                     [&] (const std::pair<u32, Search::Attack>& a, const std::pair<u32, Search::Attack>& b) {
                         if (a.second.count == b.second.count) {
-                            return b.second.score < a.second.score;
+                            if (a.second.all_clear == b.second.all_clear) {
+                                if (a.second.frame == b.second.frame) {
+                                    return b.second.score < a.second.score;
+                                }
+                                return a.second.frame < b.second.frame;
+                            }
+                            return i32(b.second.all_clear) < i32(a.second.all_clear);
                         }
                         return a.second.count < b.second.count;
                     }
@@ -105,7 +111,7 @@ namespace AI
         }
 
         // If enemy is in danger, attack
-        if (AI::get_enemy_danger(enemy, point)) {
+        else if (AI::get_enemy_danger(enemy, point, field)) {
             // Get instant attack candidate
             std::vector<Search::Candidate> attack_candidate;
             for (auto candidate : search_result.candidate) {
@@ -151,6 +157,36 @@ namespace AI
     
     Result decide_build(Search::Result& search_result, u32 field_count)
     {
+        // Go to all clear
+        std::vector<std::pair<u32, Search::Attack>> all_clear_attack;
+        for (u32 i = 0; i < search_result.candidate.size(); ++i) {
+            if (search_result.candidate[i].attack.empty()) {
+                continue;
+            }
+            for (auto attack : search_result.candidate[i].attack) {
+                if (attack.count > 4) {
+                    continue;
+                }
+                if (attack.all_clear) {
+                    all_clear_attack.push_back({i, attack});
+                }
+            }
+        }
+        if (!all_clear_attack.empty()) {
+            std::sort(
+                all_clear_attack.begin(),
+                all_clear_attack.end(),
+                [&] (const std::pair<u32, Search::Attack>& a, const std::pair<u32, Search::Attack>& b) {
+                    return a.second.score > b.second.score;
+                }
+            );
+            return Result {
+                .placement = search_result.candidate[all_clear_attack[0].first].placement,
+                .plan = search_result.candidate[all_clear_attack[0].first].plan,
+                .eval = search_result.candidate[all_clear_attack[0].first].eval,
+            };
+        }
+
         // Choose when to trigger main chain
         u32 chain_score_max = 0;
         u32 attack_count = 0;
@@ -219,7 +255,7 @@ namespace AI
         };
     };
 
-    bool get_enemy_danger(Data::Enemy& enemy, Data::Point& point)
+    bool get_enemy_danger(Data::Enemy& enemy, Data::Point& point, Field& field)
     {
         Detect::Score enemy_attack = Detect::detect(enemy.field);
         bool enemy_no_attack = (enemy_attack.chain <= 1) || (enemy_attack.score + enemy.all_clear * 30 * point.target_point <= 400);
@@ -234,7 +270,7 @@ namespace AI
             for (u8 p = 0; p < Cell::COUNT; ++p) {
                 mask_empty.cols[x] |= enemy.field.data[p].cols[x];
                 if (p != static_cast<u8>(Cell::Type::GARBAGE)) {
-                    mask_empty.cols[x] |= enemy.field.data[p].cols[x];
+                    mask_color.cols[x] |= enemy.field.data[p].cols[x];
                 }
             }
             mask_empty.cols[x] = ~mask_empty.cols[x];
@@ -245,12 +281,17 @@ namespace AI
         {
             mask_unobstructed = FieldBit::expand(mask_unobstructed) & mask_color;
             if (mask_unobstructed.get_count() == enemy_unobstructed_count) {
-                enemy_unobstructed_count = mask_unobstructed.get_count();
                 break;
             }
+            enemy_unobstructed_count = mask_unobstructed.get_count();
         }
         bool enemy_garbage_obstruct = enemy_unobstructed_count <= (enemy.field.get_count() / 2);
 
-        return enemy_no_attack || enemy_many_garbage || enemy_garbage_obstruct || (enemy_high && enemy_attack.score <= 480);
+        return
+            (enemy_no_attack && enemy.field.get_count() >= 48 && field.get_count() >= 48) ||
+            (enemy_no_attack && (field.get_count() > enemy.field.get_count() * 2)) ||
+            enemy_many_garbage ||
+            enemy_garbage_obstruct ||
+            (enemy_high && enemy_attack.score <= 480);
     };
 };

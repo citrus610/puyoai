@@ -17,13 +17,14 @@ struct Weight
     i32 ptnl_chain_count = 0;
     i32 ptnl_chain_score = 0;
     i32 ptnl_chain_added = 0;
+    i32 ptnl_chain_frame = 0;
     i32 ptnl_chain_height = 0;
 };
 
 class Evaluator
 {
 public:
-    static i32 evaluate(Field& field, std::optional<Detect::Score> detect, Weight& w);
+    static i32 evaluate(Field& field, std::optional<Detect::Score> detect, u8 frame, Weight& w);
     static void link(Field& field, i32& link_ver, i32& link_hor);
     static void d_height(u8 height[6], i32& d_height, i32& d_height_sq);
     static void symm(u8 height[6], i32& symm, i32& symm_sq);
@@ -43,5 +44,6 @@ constexpr Weight DEFAULT_WEIGHT = {
     .ptnl_chain_count = 85,
     .ptnl_chain_score = 1,
     .ptnl_chain_added = -100,
+    .ptnl_chain_frame = -100,
     .ptnl_chain_height = 100,
 };

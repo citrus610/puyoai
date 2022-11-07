@@ -186,7 +186,7 @@ int main()
     };
 
     Field field;
-    field.from(c);
+    // field.from(c);
 
     render_field(field);
     this_thread::sleep_for(chrono::milliseconds(time_wait));

@@ -4,7 +4,6 @@
 
 namespace Path
 {
-
     typedef avec<Move::Type, 32> Queue;
 
     class PositionMap

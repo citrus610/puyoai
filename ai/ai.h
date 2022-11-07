@@ -34,5 +34,5 @@ namespace AI
     Result think_1p(Field field, std::vector<Cell::Pair> queue, u8 harass_bound, u32 score_bound, Weight w = DEFAULT_WEIGHT);
     Result think_2p(Field field, std::vector<Cell::Pair> queue, u8 harass_bound, u32 score_bound, Data::Enemy enemy, Data::Point point, Weight w = DEFAULT_WEIGHT);
     Result decide_build(Search::Result& search_result, u32 field_count);
-    bool get_enemy_danger(Data::Enemy& enemy, Data::Point& point);
+    bool get_enemy_danger(Data::Enemy& enemy, Data::Point& point, Field& field);
 };

@@ -22,5 +22,6 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Weight,
     ptnl_chain_count,
     ptnl_chain_score,
     ptnl_chain_added,
+    ptnl_chain_frame,
     ptnl_chain_height
 )

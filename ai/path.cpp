@@ -145,7 +145,7 @@ namespace Path
         }
 
         Finder::Node ccw = node;
-        if (ccw.position.move_ccw(field, height) && ccw.position.y < 13 && ccw.position.y + Direction::get_offset_y(cw.position.direction) < 13) {
+        if (ccw.position.move_ccw(field, height) && ccw.position.y < 13 && ccw.position.y + Direction::get_offset_y(ccw.position.direction) < 13) {
             if (ccw.path.get_size() > 0 && ccw.path[ccw.path.get_size() - 1] == Move::Type::CCW) { 
                 ccw.path.add(Move::Type::NONE); 
             } 
@@ -189,14 +189,28 @@ namespace Path
     bool Finder::above_stack_move(Field& field, Move::Placement placement)
     {
         if (placement.x > 2) {
-            for (int x = 2; x < placement.x; ++x) {
+            for (int x = 2; x <= placement.x; ++x) {
                 if (field.get_height(x) > 10) {
                     return true;
                 }
             }
         }
         else {
-            for (int x = 2; x > placement.x; --x) {
+            for (int x = 2; x >= placement.x; --x) {
+                if (field.get_height(x) > 10) {
+                    return true;
+                }
+            }
+        }
+        if (placement.x + Direction::get_offset_x(placement.direction) > 2) {
+            for (int x = 2; x <= placement.x + Direction::get_offset_x(placement.direction); ++x) {
+                if (field.get_height(x) > 10) {
+                    return true;
+                }
+            }
+        }
+        else {
+            for (int x = 2; x >= placement.x + Direction::get_offset_x(placement.direction); --x) {
                 if (field.get_height(x) > 10) {
                     return true;
                 }

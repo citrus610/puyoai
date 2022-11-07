@@ -1,6 +1,6 @@
 #include "eval.h"
 
-i32 Evaluator::evaluate(Field& field, std::optional<Detect::Score> detect, Weight& w)
+i32 Evaluator::evaluate(Field& field, std::optional<Detect::Score> detect, u8 frame, Weight& w)
 {
     i32 result = 0;
 
@@ -35,6 +35,7 @@ i32 Evaluator::evaluate(Field& field, std::optional<Detect::Score> detect, Weigh
         result += (detect.value().score >> 8) * w.ptnl_chain_score;
         result += detect.value().chain * w.ptnl_chain_count;
         result += detect.value().added * w.ptnl_chain_added;
+        result += frame * w.ptnl_chain_frame;
         result += detect.value().height * w.ptnl_chain_height;
     }
 

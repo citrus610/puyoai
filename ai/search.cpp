@@ -36,13 +36,13 @@ namespace Search
                         .score = Chain::get_score(chain),
                         .count = u8(chain.links.get_size()),
                         .frame = 0,
-                        .all_clear = (child == Field()),
+                        .all_clear = child.get_count() == 0,
                     }
                 );
             }
 
             if (Chain::get_score(chain) <= score_bound) {
-                candidate.eval_im = Evaluator::evaluate(child, std::nullopt, w);
+                candidate.eval_im = Evaluator::evaluate(child, Detect::detect(child), 0, w);
                 u8 frame_drop = field.get_drop_pair_frame(placement[i].x, placement[i].direction);
                 Score score = dfs(child, queue, score_bound, w, ttable, candidate.attack, 1, frame_drop + chain.links.get_size() * 2);
                 if (score.eval > candidate.eval) {
@@ -79,7 +79,7 @@ namespace Search
                         .score = Chain::get_score(chain),
                         .count = u8(chain.links.get_size()),
                         .frame = frame,
-                        .all_clear = (child == Field()),
+                        .all_clear = child.get_count() == 0,
                     }
                 );
             }
@@ -93,7 +93,7 @@ namespace Search
                     }
                     else {
                         Detect::Score detect = Detect::detect(child);
-                        score.eval = Evaluator::evaluate(child, detect, w);
+                        score.eval = Evaluator::evaluate(child, detect, u8(frame + frame_drop), w);
                         score.plan = child;
                         if (detect.chain > 0) {
                             attack.push_back(
