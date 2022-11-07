@@ -32,18 +32,18 @@ public:
 };
 
 constexpr Weight DEFAULT_WEIGHT = {
-    .link_ver = 25,
-    .link_hor = 25,
-    .d_height = -5,
-    .d_height_sq = -1,
-    .symm = -5,
-    .symm_sq = -2,
-    .shape_u = -10,
-    .shape_u_sq = -10,
+    .link_ver = 300,
+    .link_hor = 300,
+    .d_height = -50,
+    .d_height_sq = -5,
+    .symm = -50,
+    .symm_sq = -20,
+    .shape_u = -100,
+    .shape_u_sq = -100,
 
-    .ptnl_chain_count = 85,
-    .ptnl_chain_score = 1,
-    .ptnl_chain_added = -100,
-    .ptnl_chain_frame = -100,
-    .ptnl_chain_height = 100,
+    .ptnl_chain_count = 1000,
+    .ptnl_chain_score = 10,
+    .ptnl_chain_added = -1000,
+    .ptnl_chain_frame = -500,
+    .ptnl_chain_height = 1000,
 };
