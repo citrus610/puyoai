@@ -11,7 +11,7 @@ An AI designed to play Puyo Puyo Tsu 1P and PVP. This project presently only com
 ## Directory description
 - `core` - puyo puyo core logic implementation.
 - `ai` - the AI implementation.
-- `client` - the standalone client, for now only showing the AI playing 1P.
+- `cli` - the standalone client, for now only showing the AI playing 1P.
 
 ## License
 This project is licensed under [MIT LICENSE](LICENSE).
